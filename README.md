@@ -1,56 +1,51 @@
-# TimeStamps 2.3
+# TimeStamps — Updated by NightLife
 
-**Portable timestamp generator for 64-bit Windows 10 and Windows 11**
+TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential, randomized timestamps. This repository contains the NightLife modernization, the original program credits, and a single-file Windows installer.
 
-Originally developed as a Delphi 3 application in 1997 and reconstructed as a native Win32 desktop application. Windows modernization: **Updated by NightLife**.
+**Current installer:** [TimeStamps 2.5 Setup — Updated by NightLife](releases/TimeStamps_2.5_Setup_Updated_by_NightLife.exe)
 
-## What it does
+## TimeStamps 2.5
 
-- Generates sequential timestamps with randomized intervals between entries.
-- Supports posting-hour restrictions, including schedules that cross midnight.
-- Provides date/time presets and custom token templates.
-- Copies selected or all results to the clipboard and saves plain-text output.
-- Can continue from the most recently generated timestamp between sessions.
-- Imports settings from the original `TimeStamps.ini` without modifying that file.
-- Stores new settings at `%APPDATA%\\NightLife\\TimeStamps\\settings.json`.
+- Four-second NightLife splash screen, displayed **before** the main window is created.
+- Purple serpent application icon embedded directly in the application, setup, and uninstaller, rather than depending on an external sidecar icon.
+- Accessible Windows interface designed around 1360×768 at 125% display scaling, with large text.
+- Setup, Format, and Results screens; sequential timestamp generation and overnight windows; format presets; copy/save output.
+- True per-user Windows setup, Start Menu shortcut, optional desktop shortcut, Installed Apps registration, and uninstaller.
+- Existing preferences preserved on upgrades. No administrator permissions required for standard installation.
 
-## Version 2.3 changes (November 6, 2026)
+## Install
 
-- Reworked Setup / Format / Results navigation to queue page changes after the originating Windows control event.
-- Reworked Format preset selection to avoid nested Win32 event handling.
-- Removed unstable A+ / A− font-size controls; Results uses fixed 16-point Consolas.
-- Preserved existing presets, custom formatting, clipboard operations, and save behavior.
-- Targeted a 1360 × 768 display at 125% Windows scaling.
+Download the `.exe` file linked above and run it. The installer is not code-signed. Windows may show a publisher warning. The application runs offline and does not require the Delphi runtime or Go.
 
-## Running the application
+If upgrading a previous portable version, the installer keeps a `TimeStamps.ini` located alongside the installer when one is present and no newer settings file exists.
 
-The original 2.3 distribution contains `TimeStamps.exe`, `TimeStamps.exe.manifest`, `TimeStamps.ico`, and supporting documentation. Extract all distribution files into one folder and run `TimeStamps.exe`. No installer, administrator rights, .NET, Python, or network connection is required.
+**Limit of verification:** Cross-compilation, automated timestamp tests, installation/rollback simulations, and PE icon resource validation passed. Interactive startup and splash visibility have not been verified on a physical Windows 10/11 machine.
 
-**Distribution note:** the Windows executable and ZIP archive are **not yet uploaded to this repository**. The documentation here does not constitute an installable build.
+## Build from source
 
-## Formatting tokens
+`app/` contains the Go application, embedded splash artwork, multi-resolution icon, and Windows resource object. `setup/` contains the Go installer and uninstaller. Each module has its own `go.mod`.
 
-| Token | Meaning |
-|---|---|
-| `{time}` | Time in selected style |
-| `{date}` | Date in selected style |
-| `{yyyy}`, `{yy}` | Four-/two-digit year |
-| `{MM}`, `{dd}` | Month / day |
-| `{HH}`, `{mm}`, `{ss}` | Hours / minutes / seconds |
-| `{ddd}` | Abbreviated weekday |
+On Windows, with Go installed:
 
-## Verification status
+```powershell
+cd app
+go test ./...
+go build -ldflags "-H windowsgui" -o TimeStamps.exe .
+cd ..\setup
+go test ./...
+go build -ldflags "-H windowsgui" -o Uninstall-TimeStamps.exe .\uninstaller
+```
 
-Automated Go unit tests, format-preset checks, layout geometry assertions, and Windows 64-bit cross-compilation were reported as passing for this build. **The executable has not been interactively tested on a Windows 10/11 system in the supplied test report.** The Format-tab lockup fix remains a candidate pending runtime verification.
+Then create `setup/payload.zip` containing the application executable, manifest, ICO, splash PNG, README, CHANGELOG, ORIGINAL_CREDITS, SPLASH_TEST_NOTES, and Uninstall-TimeStamps.exe at the archive root. Run `go build -ldflags "-H windowsgui" -o TimeStamps_Setup.exe .` from `setup/`.
 
-## Original credits and distribution terms
+The included `rsrc_windows_amd64.syso` files embed the program icon in compiled executables. `app/build_icon_resource.py` shows how those resources can be regenerated with Python 3 and clang.
 
-- **Original program (1997):** Scott GrantSmith
-- **Original requirements:** Branson Hagerty
-- **Windows 10/11 modernization:** Updated by NightLife
+GitHub Actions can also build the application and installer and upload the finished artifacts for inspection.
 
-The original author released the program and source as freeware, permitting use and modification but prohibiting claims of original authorship or charging for distribution. Preserve the original credits and distribute without charge.
+## Original credits
 
-See `ORIGINAL_CREDITS.txt` for the original author's statement.
+The original Delphi 3 program dates from 1997. Original programming: **Scott GrantSmith**. Requirements: **Branson Hagerty**. The modern update is credited to **NightLife**. See `ORIGINAL_CREDITS.txt` for the original attribution as recovered from the installation files.
 
-**Important:** The supplied TimeStamps 2.3 ZIP contains an executable, configuration file and documentation, **not the modernized source code**. This repository must not be treated as a source release unless that source is separately added.
+## Status
+
+The NightLife version is a reconstruction of the original desktop application. It is not the original 1997 executable, and its Windows GUI should not be considered verified until it is successfully launched and exercised on Windows.

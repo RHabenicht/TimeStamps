@@ -1,0 +1,11 @@
+TimeStamps 2.5 startup splash
+
+- Display duration: 4 seconds, starting when the popup is shown.
+- The splash is created before the main application window.
+- The Win32 message pump remains on its creating OS thread.
+- If splash window registration or creation fails, errors appear in the user config directory under TimeStamps/splash_errors.log.
+- No other window is created before the splash closes.
+- The artwork remains the approved NightLife dice-free purple serpent splash.
+- The application executable and setup executable both contain embedded icon resources.
+
+Testing caveat: The Windows executable is cross-compiled and tested structurally; interactive Windows execution remains unverified.

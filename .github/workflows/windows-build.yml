@@ -1,0 +1,29 @@
+name: Windows build and installer tests
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+      - name: Build and test
+        shell: pwsh
+        run: ./BUILD_RELEASE.ps1
+      - name: Check generated executables
+        shell: pwsh
+        run: |
+          foreach ($file in @('TimeStamps.exe','Uninstall-TimeStamps.exe','TimeStamps_2.5_Setup_Updated_by_NightLife.exe')) {
+            if (!(Test-Path (Join-Path dist $file))) {throw "Missing $file"}
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TimeStamps-2.5-Windows
+          path: |
+            dist/TimeStamps.exe
+            dist/Uninstall-TimeStamps.exe
+            dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe

@@ -1,3 +1,20 @@
+TimeStamps 2.5 — NightLife icon and splash fix (2026-11-09)
+- Embedded seven sizes of the purple serpent icon directly in the Windows application, setup, and uninstaller.
+- Display the 4-second splash BEFORE initializing the main Windows interface.
+- Lock the Win32 GUI message loop to its creating OS thread.
+- Log errors if splash initialization fails.
+- Preserve timestamps, formatting, settings, and original credits.
+
+TIMESTAMPS 2.4 — STARTUP SPLASH (2026-11-09)
+- Added approved TimeStamps/Updated by NightLife neon serpent artwork,
+  with no dice, as a splash image embedded directly in the executable.
+- Splash displays for four seconds, then shows the existing main window.
+- Native Windows message timer keeps the UI message loop responsive.
+- Scales to fit the usable desktop area without cropping.
+- Keeps original credit information in ORIGINAL_CREDITS.txt.
+- Existing timestamp functionality, results font, and Format-tab fixes unchanged.
+- Corrected external manifest version to 2.4.0.0.
+
 2.3 — NIGHTLIFE FORMAT-TAB STABILITY PATCH (2026-11-06)
  - Reworked SETUP / FORMAT / RESULTS navigation so page changes are posted
    to the Windows message queue after the originating button event returns.
