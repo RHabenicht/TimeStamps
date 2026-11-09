@@ -150,6 +150,7 @@ try {
   Assert ([TimeStampsWin32]::IsWindowVisible($splash)) 'splash exists but is not visible'
   $splashSeen=[DateTime]::UtcNow
   $main=Wait-Top 'NightLifeTimeStampsV2' '' $appProcess.Id 25
+  Wait-Visible $main $true 'main window'
   $delay=([DateTime]::UtcNow-$splashSeen).TotalSeconds
   Assert ($delay -ge 2.5 -and $delay -le 14) "splash-to-main timing outside expected range: $delay"
   Assert ([TimeStampsWin32]::IsWindowVisible($main)) 'main window invisible'
