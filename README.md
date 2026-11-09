@@ -60,6 +60,10 @@ The original Delphi 3 program dates from 1997. Original programming: **Scott Gra
 
 See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for preserved requirements and issue history from the original TimeStamps development chat. The [November 9 Windows 11 runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) records the first passed published-installer desktop smoke test and its remaining limitations.
 
+## Release stability
+
+The public **v2.5 installer is pinned**. Routine GitHub builds run Windows tests and upload temporary Actions artifacts; they do **not** overwrite the v2.5 downloadable installer. This avoids changing the published binary every time the source changes. Norton 360 may still evaluate different downloaded files by signature or reputation; keeping a version/filename alone cannot guarantee a permanent antivirus exception.
+
 ## Status
 
 The NightLife version is a reconstruction of the original desktop application, not the 1997 Delphi executable. It has now been launched and exercised on a hosted Windows 11 runner, but the specific physical 1360×768 display at 125% scaling and Windows 10 are still unverified. Version 2.5 corrects the outdated uninstaller and About dialog version labels. The splash rendering evidence comes from a hosted Windows runner; this is not a guarantee of visibility on every physical PC.

@@ -7,7 +7,7 @@ jobs:
   windows:
     runs-on: windows-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -35,15 +35,3 @@ jobs:
             dist/TimeStamps.exe
             dist/Uninstall-TimeStamps.exe
             dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe
-      - name: Refresh published TimeStamps 2.5 installer
-        if: github.ref == 'refs/heads/main'
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view v2.5 --json tagName | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw 'TimeStamps 2.5 release is missing' }
-          gh release upload v2.5 'dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe' 'dist/TimeStamps.exe' 'dist/Uninstall-TimeStamps.exe' --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Updating TimeStamps 2.5 assets failed' }
-          gh release edit v2.5 --title 'TimeStamps 2.5 — Updated by NightLife' --notes 'Refreshed TimeStamps 2.5 build. Splash foreground handling and startup diagnostics are included. Windows Go tests, painted splash pixels, install/upgrade, Format navigation, generation and uninstall checks passed. Executables are unsigned. The owner PC, Windows 10, Norton 360 and 1360x768 at 125 percent have not been independently tested.'
-          if ($LASTEXITCODE -ne 0) { throw 'Updating TimeStamps 2.5 release notes failed' }
