@@ -46,6 +46,6 @@ jobs:
           if ($existing -eq 'v2.5.1') {
             Write-Host 'Release v2.5.1 already exists; leaving published binaries unchanged.'
           } else {
-            gh release create v2.5.1 'dist/TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe' 'dist/TimeStamps.exe' 'dist/Uninstall-TimeStamps.exe' --target "$env:GITHUB_SHA" --title 'TimeStamps 2.5.1 — Updated by NightLife' --notes 'Windows 10/11 (64-bit) installer and portable application. Includes NightLife serpent icon and four-second splash screen. CI compilation, Go tests, package checks: passed. Hosted Windows runtime install, GDI artwork pixels, 15 Format transitions, and uninstall tests passed. The user's physical display and Norton 360 were not tested. Executables are unsigned.'
+            gh release create v2.5.1 'dist/TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe' 'dist/TimeStamps.exe' 'dist/Uninstall-TimeStamps.exe' --target "$env:GITHUB_SHA" --title 'TimeStamps 2.5.1 — Updated by NightLife' --notes 'Windows 10/11 (64-bit) installer and portable application. Includes NightLife serpent icon and four-second splash screen. CI compilation, Go tests, package checks: passed. Hosted Windows runtime install, GDI artwork pixels, 15 Format transitions, and uninstall tests passed. The physical display used by the owner and Norton 360 were not tested. Executables are unsigned.'
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
           }
