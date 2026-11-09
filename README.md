@@ -29,7 +29,7 @@ Download the `.exe` file linked above and run it. The installer is not code-sign
 
 If upgrading a previous portable version, the installer keeps a `TimeStamps.ini` located alongside the installer when one is present and no newer settings file exists.
 
-**Verification:** Automated timestamp tests, installer/rollback simulations, and Windows executable checks passed. The **actual published v2.5 setup** also passed a Windows 11 GitHub runner smoke test covering install, upgrade, splash (~4.1 seconds observed), 15 Format/Setup transitions, Generate, and uninstall. See [Windows runtime test report](WINDOWS_RUNTIME_TEST_2026-11-09.md). This does not yet verify Windows 10, the user's physical 1360×768/125%-scale screen, Norton 360 reputation, or mouse-driven visual accessibility.
+**Verification:** The **current published v2.5 build** passed a Windows runner end-to-end test: exact full splash artwork rendered with ~6.2-second startup timing, install and upgrade, 15 Format/Setup transitions, Generate and uninstall ([final tested source run](https://github.com/RHabenicht/TimeStamps/actions/runs/42649970586); [verified one-time release upload](https://github.com/RHabenicht/TimeStamps/actions/runs/42650243890)). The earlier [Windows runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) describes a historical build with four-second splash, *not* the current published binary. The user's physical 1360×768/125%-scale screen, Norton 360 reputation, Windows 10 and mouse-driven visual accessibility are not verified.
 
 ## Build from source
 
@@ -58,7 +58,7 @@ The original Delphi 3 program dates from 1997. Original programming: **Scott Gra
 
 ## Preserved project decisions
 
-See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for preserved requirements and issue history from the original TimeStamps development chat. The [November 9 Windows 11 runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) records the first passed published-installer desktop smoke test and its remaining limitations.
+See [CODEX_HANDOFF_2026-11-09.md](CODEX_HANDOFF_2026-11-09.md) for Codex transfer and [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for preserved requirements and issue history from the original TimeStamps development chat. The [November 9 Windows 11 runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) records the first passed published-installer desktop smoke test and its remaining limitations.
 
 ## Release stability
 

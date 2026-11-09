@@ -24,11 +24,11 @@ Preserved November 9, 2026, from the previous TimeStamps chat, its QA files, and
 - The bottom of the older UI was cut off and the user has difficulty reading small text. Controls, headings, footer, page navigation and Generate action must remain visible, usable and large enough for the reported display.
 - A−/A+ text-size controls caused instability; **remove/leave absent**, not merely disable; keep fixed, legible **16-point Consolas output**.
 - Do not regress Format-page navigation. The previously observed lockup occurred while using the Format screen. v2.3 deferred page changes and preset application via queued Win32 messages instead of synchronous reentrant command handling.
-- Main window and four-second splash must fit inside the actual Windows work area, accounting for the taskbar and scaling. Static geometry tests are not proof of interactive display success.
+- Main window and six-second splash must fit inside the actual Windows work area, accounting for the taskbar and scaling. Static geometry tests are not proof of interactive display success.
 
 ## Branding, splash, and icon decisions
 
-- Show the **four-second** splash **before** the main window appears (not behind it). The current implementation uses a single locked OS thread and pumps messages for splash painting. The checked-in splash image is app/splash_screen.png, with source graphics and decode/tests in app/.
+- Show the **six-second** splash **before** the main window appears (not behind it). The current implementation uses a single locked OS thread and pumps messages for splash painting. The checked-in splash image is app/splash_screen.png, with source graphics and decode/tests in app/.
 - Approved later visual direction: a **purple neon serpent/crest with no dice**, metallic TimeStamps title, 'Updated by NightLife', collaborator acknowledgments, and the Shadowrun 1st/2nd/3rd Edition caption.
 - Historical artwork alternatives have differing collaborator text: the dice-free library reference says **'Blackjack & DerFette'**; an earlier dice-including candidate says **'Blackjack & NathanHawks'**. This is a historical discrepancy, not authorization to change the final checked-in splash; preserve current artwork/credits until user explicitly requests a revision.
 - Corrected serpent icon must be **embedded** in TimeStamps.exe, installer and uninstaller; the separate TimeStamps.ico should not be required to show the primary executable icon.
@@ -47,7 +47,7 @@ Preserved November 9, 2026, from the previous TimeStamps chat, its QA files, and
 ## Verification (what has and has not been tested)
 
 - v2.3 source/library QA: **17 Go tests**, **576 posting windows**, **12 portable install simulations** reported passing. This does **not** establish physical GUI functionality.
-- v2.5 GitHub Actions Windows runner builds application, installer, uninstaller, runs Go tests, checks executables, uploads build artifacts, and publishes release `v2.5`:
+- Historical v2.5 GitHub Actions build ran tests and published the initial release; the **current** Windows workflow builds, tests and uploads **Actions artifacts only**, without automatically modifying public release `v2.5`:
   https://github.com/RHabenicht/TimeStamps/actions/runs/42619772441
 - **November 9 runtime update:** Published 2.5 installer was executed on a **hosted Windows 11 build 26100** runner: install, Installed Apps registration, shortcuts, upgrade preserving user files, splash-to-main interval (~4.1 seconds observed), 15 live Format/Setup cycles with preset changes, Generate (380 output characters), app exit confirmation and uninstall all PASS. Full evidence: [WINDOWS_RUNTIME_TEST_2026-11-09.md](WINDOWS_RUNTIME_TEST_2026-11-09.md), run https://github.com/RHabenicht/TimeStamps/actions/runs/42624608640. This is actual Windows runner execution, not mere compilation. **Still outstanding:** Windows 10 desktop; the user's physical 1360 × 768 @125%-scale layout/legibility; direct native mouse testing; Norton 360/SmartScreen behavior on the user's machine.
 - The dedicated runtime Windows smoke job now verifies many of these UI/installer interactions, but not the physical monitor or Norton. Always distinguish the completed runner tests from tests still outstanding. If a real Windows test becomes available, add evidence and steps/results to a new report.
@@ -59,7 +59,17 @@ Preserved November 9, 2026, from the previous TimeStamps chat, its QA files, and
 - Library reports: `TimeStamps_QA_2026-11-06.txt`; `TimeStamps_2.4_Installer_Test_Report.txt`
 - Library visual reference: `Neon Shadowrun TimeStamps Splash Screen.png` (dice-free approved visual); older variants include `TimeStamps Neon Cyberpunk Splash.png` and `Neon Serpent TimeStamps Splash Screen.png`.
 
+## November 9 final update — six-second approved artwork and pinned release
+
+The approved user-supplied full 1672 × 941 purple TimeStamps/Updated by NightLife splash image **already matches** the repository PNG pixel for pixel (decoded RGBA SHA-256 `f1311c993d8286e64151c090799e3733904191fdc00d8fffd2c92fc921c343e1`). The user specifically rejected an additional separately drawn serpent icon; the **entire original PNG, including the built-in large serpent**, is now shown for **six seconds** before main. `splashDurationMs=6000`, with a no-overlay regression test.
+
+The final approved source Windows test: https://github.com/RHabenicht/TimeStamps/actions/runs/42649970586 — PASS (painted full art, ~6.2-second splash, install/upgrade, 15 Format/Setup cycles, generation, uninstall). One-time public asset replacement succeeded at https://github.com/RHabenicht/TimeStamps/actions/runs/42650243890. The published v2.5 installer SHA-256 is `14160d2728a87b2b60160c837f22b037653900e0dcf57e4985c6b35783502ee6`. The prior ~4.1-second timing and old digest elsewhere in this document describe the **historical earlier v2.5 build**, not the current release.
+
+The user emphasized keeping **version 2.5** and avoiding repeated Norton 360 exclusions. The public `v2.5` assets are pinned; routine source commits and builds must not overwrite them. The currently published executable remains unsigned, and any changed binary can require Norton reevaluation regardless of unchanged version/filename.
+
+For Codex transfer, see `AGENTS.md` and `CODEX_HANDOFF_2026-11-09.md`. Remaining unverified: user's physical LG display/125% DPI, Norton 360, SmartScreen, and Windows 10 runtime.
+
 ## Historical interpretation
-The user's latest request was to publish this **2.5** Windows installer, corrected icon, splash, and source to GitHub and test it, without requiring them to do the development/testing work. On November 9 the project reached a completed Windows GitHub Actions build, a tagged release with three binaries, and a separate PASS on actual Windows runner installer/GUI/uninstaller smoke tests. The uninstaller dialog still says 2.4 and About still says 2.3 in the published 2.5 binary; fix those labels in a future release rather than misrepresenting the existing release. Keep future TimeStamps work in this repository; do not confuse this project with the distinct **NSRCG II** or **RunnerForge** applications.
+The user's latest request was to publish this **2.5** Windows installer, corrected icon, splash, and source to GitHub and test it, without requiring them to do the development/testing work. On November 9 the project reached a completed Windows GitHub Actions build, a tagged release with three binaries, and a separate PASS on actual Windows runner installer/GUI/uninstaller smoke tests. Those labels were outdated in an earlier v2.5 binary; the currently published v2.5 release has corrected About and uninstall labels. Do not use the early-release SHA or runtime as the current published build. Keep future TimeStamps work in this repository; do not confuse this project with the distinct **NSRCG II** or **RunnerForge** applications.
 
 Deletion of the prior conversation is the user's decision. This file preserves *retrieved project decisions and references* but is not a verbatim transcript or a complete copy of chat-only attachments.

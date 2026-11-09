@@ -1,4 +1,6 @@
-# TimeStamps 2.5 — published installer Windows runtime test
+# TimeStamps 2.5 — historical initial published installer Windows runtime test
+**Historical evidence notice:** This report describes an **earlier v2.5 binary** with a four-second splash. It is not the currently published installer. The final six-second original-artwork build was tested in [Windows run 42649970586](https://github.com/RHabenicht/TimeStamps/actions/runs/42649970586) and published in [release run 42650243890](https://github.com/RHabenicht/TimeStamps/actions/runs/42650243890). Current published v2.5 installer SHA-256: `14160d2728a87b2b60160c837f22b037653900e0dcf57e4985c6b35783502ee6`.
+
 **Date:** November 9, 2026
 **Result:** PASS — published release installer, actual Windows runtime interaction
 **GitHub Actions:** https://github.com/RHabenicht/TimeStamps/actions/runs/42624608640
