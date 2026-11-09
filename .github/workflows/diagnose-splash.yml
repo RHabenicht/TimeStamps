@@ -1,0 +1,16 @@
+name: Verify actual splash artwork pixels in v2.5 release
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ci/diagnose-splash.ps1
+      - .github/workflows/diagnose-splash.yml
+jobs:
+  splash-pixels:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect real v2.5 popup pixels
+        shell: pwsh
+        run: .\ci\diagnose-splash.ps1
