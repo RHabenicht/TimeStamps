@@ -30,6 +30,10 @@ jobs:
         run: .\ci\windows-install-smoke-v25.ps1
       - uses: actions/upload-artifact@v4
         with:
+          name: TimeStamps-2.5-Setup
+          path: dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe
+      - uses: actions/upload-artifact@v4
+        with:
           name: TimeStamps-2.5-Windows
           path: |
             dist/TimeStamps.exe
