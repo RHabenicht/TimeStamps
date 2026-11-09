@@ -2,7 +2,7 @@
 
 TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential, randomized timestamps. This repository contains the NightLife modernization, the original program credits, and a single-file Windows installer.
 
-**Current installer:** [TimeStamps 2.5 Setup — Updated by NightLife](releases/TimeStamps_2.5_Setup_Updated_by_NightLife.exe)
+**Current installer:** [Download TimeStamps 2.5 Setup — Updated by NightLife (.exe)](https://github.com/RHabenicht/TimeStamps/releases/download/v2.5/TimeStamps_2.5_Setup_Updated_by_NightLife.exe)\n\n[Full v2.5 release (installer, portable executable, uninstaller)](https://github.com/RHabenicht/TimeStamps/releases/tag/v2.5)
 
 ## TimeStamps 2.5
 
@@ -45,6 +45,10 @@ GitHub Actions can also build the application and installer and upload the finis
 ## Original credits
 
 The original Delphi 3 program dates from 1997. Original programming: **Scott GrantSmith**. Requirements: **Branson Hagerty**. The modern update is credited to **NightLife**. See `ORIGINAL_CREDITS.txt` for the original attribution as recovered from the installation files.
+
+## Preserved project decisions
+
+See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for the retained requirements and issue history from the original TimeStamps development chat, the accessibility constraints, and the live Windows tests that remain outstanding.
 
 ## Status
 
