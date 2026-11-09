@@ -19,7 +19,7 @@ Download the `.exe` file linked above and run it. The installer is not code-sign
 
 If upgrading a previous portable version, the installer keeps a `TimeStamps.ini` located alongside the installer when one is present and no newer settings file exists.
 
-**Limit of verification:** Cross-compilation, automated timestamp tests, installation/rollback simulations, and PE icon resource validation passed. Interactive startup and splash visibility have not been verified on a physical Windows 10/11 machine.
+**Verification:** Automated timestamp tests, installer/rollback simulations, and Windows executable checks passed. The **actual published v2.5 setup** also passed a Windows 11 GitHub runner smoke test covering install, upgrade, splash (~4.1 seconds observed), 15 Format/Setup transitions, Generate, and uninstall. See [Windows runtime test report](WINDOWS_RUNTIME_TEST_2026-11-09.md). This does not yet verify Windows 10, the user's physical 1360×768/125%-scale screen, Norton 360 reputation, or mouse-driven visual accessibility.
 
 ## Build from source
 
@@ -48,8 +48,8 @@ The original Delphi 3 program dates from 1997. Original programming: **Scott Gra
 
 ## Preserved project decisions
 
-See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for the retained requirements and issue history from the original TimeStamps development chat, the accessibility constraints, and the live Windows tests that remain outstanding.
+See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for preserved requirements and issue history from the original TimeStamps development chat. The [November 9 Windows 11 runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) records the first passed published-installer desktop smoke test and its remaining limitations.
 
 ## Status
 
-The NightLife version is a reconstruction of the original desktop application. It is not the original 1997 executable, and its Windows GUI should not be considered verified until it is successfully launched and exercised on Windows.
+The NightLife version is a reconstruction of the original desktop application, not the 1997 Delphi executable. It has now been launched and exercised on a hosted Windows 11 runner, but the specific physical 1360×768 display at 125% scaling and Windows 10 are still unverified. The tested v2.5 uninstaller and About dialog retain outdated 2.4/2.3 labels for a future correction.
