@@ -48,7 +48,7 @@ func TestFormatTabWin32EventFlowRegression(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	src := string(data)
+	src := strings.ReplaceAll(string(data), "\r\n", "\n")
 	for _, required := range []string{
 		"case ID_PAGE_FORMAT:\n\t\trequestPage(1)",
 		"procPostMessage.Call(app.hwnd, WM_APP_SWITCHPAGE",

@@ -7,11 +7,14 @@ New-Item -ItemType Directory -Force -Path $Out | Out-Null
 Push-Location $App
 try {
   go test ./...
+  if ($LASTEXITCODE -ne 0) { throw 'TimeStamps Go unit tests failed' }
   go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps.exe') .
+  if ($LASTEXITCODE -ne 0) { throw 'TimeStamps application build failed' }
 } finally { Pop-Location }
 Push-Location $Setup
 try {
   go build -ldflags '-H windowsgui' -o (Join-Path $Out 'Uninstall-TimeStamps.exe') ./uninstaller
+  if ($LASTEXITCODE -ne 0) { throw 'Uninstaller build failed' }
   $Payload = Join-Path $Setup 'payload.zip'
   if (Test-Path $Payload) {Remove-Item $Payload -Force}
   Add-Type -AssemblyName System.IO.Compression
@@ -25,6 +28,8 @@ try {
     }
   } finally { $zip.Dispose() }
   go test ./...
+  if ($LASTEXITCODE -ne 0) { throw 'Installer Go unit tests failed' }
   go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe') .
+  if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
 } finally { Pop-Location }
 Write-Host "Finished builds under $Out"
