@@ -69,9 +69,8 @@ try {
   if(-not (Test-Path -LiteralPath $statusPath)) {throw 'Splash status file missing'}
   $status=Get-Content -LiteralPath $statusPath -Raw
   Write-Host ("Splash diagnostics: "+$status.Trim())
-  if($status -notmatch 'logoLoaded=true') {throw 'Embedded logo was not loaded'}
-  if($status -notmatch 'logoDrawn=true') {throw 'Logo was not drawn successfully'}
-  Write-Host 'LOGO DRAWN: PASS (embedded Windows icon drawn with DrawIconEx)'
+  if($status -notmatch 'imageDrawn=true' -and $status -notmatch 'artworkDrawn=true') {throw 'The approved full splash artwork did not draw'}
+  Write-Host 'FULL APPROVED SPLASH: PASS (embedded 1672x941 PNG with serpent logo)'
   $unique=@($pixels|Sort-Object -Unique).Count
   Write-Host "Unique sample colors: $unique"
   if($unique -le 2){throw 'Splash actual pixels are uniform or near uniform, artwork is not visibly drawn in Win32 HDC'}

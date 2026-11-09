@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"testing"
+)
 
 func TestSplashArtworkDecodes(t *testing.T) {
 	bmp, err := decodeSplash(splashPNG)
@@ -28,5 +32,25 @@ func TestSplashFitsAccessibleMonitor(t *testing.T) {
 		if ratio < original-0.01 || ratio > original+0.01 {
 			t.Fatalf("aspect ratio not preserved: %f", ratio)
 		}
+	}
+}
+
+func TestFullSplashExactlyMatchesApprovedNightLifeArtwork(t *testing.T) {
+	// The original approved full splash (including the large right-side serpent
+	// logo) is already embedded. Its pixels match the user-uploaded 1672x941 PNG.
+	// Hash decoded pixels so PNG encoding or metadata changes do not cause failure.
+	const approvedRGBA = "f1311c993d8286e64151c090799e3733904191fdc00d8fffd2c92fc921c343e1"
+	bmp, err := decodeSplash(splashPNG)
+	if err != nil { t.Fatal(err) }
+	rgba := make([]byte, len(bmp.BGRA))
+	for i := 0; i < len(rgba); i += 4 {
+		rgba[i+0] = bmp.BGRA[i+2]
+		rgba[i+1] = bmp.BGRA[i+1]
+		rgba[i+2] = bmp.BGRA[i+0]
+		rgba[i+3] = bmp.BGRA[i+3]
+	}
+	digest := sha256.Sum256(rgba)
+	if got := hex.EncodeToString(digest[:]); got != approvedRGBA {
+		t.Fatalf("embedded splash does not match the approved full image pixels: got %s", got)
 	}
 }

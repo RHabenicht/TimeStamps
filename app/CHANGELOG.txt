@@ -1,3 +1,10 @@
+TimeStamps 2.5 — use exact approved full splash artwork (2026-11-09)
+- Compared the user-uploaded 1672x941 splash with the existing embedded PNG: their decoded RGBA SHA-256 hashes match exactly.
+- Remove the wrongly added DrawIconEx serpent icon overlay; the complete artwork already includes its original right-side logo.
+- Retain the six-second startup display and foreground window behavior.
+- Keep the version 2.5 and its installer filename, verify source-artwork integrity in Go tests.
+- This corrective build requires one intentional release replacement; automatic release overwrites remain disabled.
+
 TimeStamps 2.5 — splash logo and duration correction (2026-11-09)
 - Keep release/application version 2.5.
 - Display the six-second splash at startup.
