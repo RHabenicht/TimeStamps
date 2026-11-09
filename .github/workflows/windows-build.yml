@@ -6,6 +6,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -27,3 +29,17 @@ jobs:
             dist/TimeStamps.exe
             dist/Uninstall-TimeStamps.exe
             dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe
+      - name: Publish TimeStamps 2.5 installer release
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $existing = gh release list --limit 100 --json tagName --jq '.[] | select(.tagName == "v2.5") | .tagName'
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to query existing releases' }
+          if ($existing -eq 'v2.5') {
+            Write-Host 'Release v2.5 already exists; leaving published binaries unchanged.'
+          } else {
+            gh release create v2.5 'dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe' 'dist/TimeStamps.exe' 'dist/Uninstall-TimeStamps.exe' --target "$env:GITHUB_SHA" --title 'TimeStamps 2.5 — Updated by NightLife' --notes 'Windows 10/11 (64-bit) installer and portable application. Includes NightLife serpent icon and four-second splash screen. CI compilation, Go tests, package checks: passed. Interactive Windows GUI testing is not yet independently verified. Executables are unsigned.'
+            if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
+          }
