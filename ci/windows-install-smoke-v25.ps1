@@ -1,4 +1,4 @@
-# Test the actually published v2.5 setup on a disposable Windows GitHub runner.
+# Test the locally built v2.5 candidate on a disposable Windows GitHub runner.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -TypeDefinition @'
@@ -13,6 +13,7 @@ public static class TimeStampsWin32 {
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr h, StringBuilder s, int capacity);
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint processId);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern bool SetWindowText(IntPtr h, string text);
     [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr parent, int id);
     [DllImport("user32.dll")] public static extern int GetDlgCtrlID(IntPtr h);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint message, IntPtr w, IntPtr l);
@@ -83,6 +84,7 @@ function Run-Installer([string]$setupExe, [bool]$makeDesktop) {
   try {
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 30
     Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'Windows 10/11') 'initial installer prompt unexpected'
+    Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'six-second splash') 'installer splash duration text is outdated'
     Choice $dlg 6
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 45
     Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'desktop shortcut') 'desktop shortcut prompt unexpected'
@@ -121,7 +123,7 @@ Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'dist/TimeStamps_2.5_Set
 $hash=(Get-FileHash $setupPath -Algorithm SHA256).Hash
 $bytes=(Get-Item $setupPath).Length
 Assert ($bytes -gt 1000000) 'release download size unexpected'
-Write-Host "Released installer SHA256: $hash, bytes: $bytes"
+Write-Host "Candidate installer SHA256: $hash, bytes: $bytes"
 Write-Host "Windows: $([Environment]::OSVersion.VersionString)"
 Write-Host "Session: $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)"
 try {
@@ -130,7 +132,7 @@ try {
   foreach($file in @('TimeStamps.exe','TimeStamps.exe.manifest','TimeStamps.ico','splash_screen.png','Uninstall-TimeStamps.exe')) {
     Assert (Test-Path -LiteralPath (Join-Path $dest $file)) "installed file missing: $file"
   }
-  Note 'released setup installed executable, icon, splash, manifest and uninstaller'
+  Note 'candidate setup installed executable, icon, splash, manifest and uninstaller'
   Assert (Test-Path -LiteralPath $startShortcut) 'Start Menu shortcut missing'
   Assert (Test-Path -LiteralPath $registry) 'Installed Apps registry entry missing'
   $uninstallReg=Get-ItemProperty -LiteralPath $registry
@@ -172,11 +174,21 @@ try {
     Wait-Visible $preset $false 'Format preset hidden on Setup'
   }
   Note '15 live Format/Setup transitions and preset changes responded without a hung Win32 message'
+  Send-Command $main 202 # Format
+  Wait-Visible $preset $true 'Format preset'
+  $template=[TimeStampsWin32]::GetDlgItem($main,109)
+  Assert ([TimeStampsWin32]::SetWindowText($template,'{HH}:{mm}:{ss}')) 'could not set custom clock-token template'
   Send-Command $main 114 # Generate
   $output=[TimeStampsWin32]::FindOutputEdit($main)
   Assert ($output -ne [IntPtr]::Zero) 'output EDIT control not found'
   $generated=[TimeStampsWin32]::Text($output)
   Assert ($generated.Trim().Length -gt 0) 'Generate did not produce timestamp output'
+  $lines=@($generated.Trim() -split '\r?\n')
+  Assert ($lines.Count -eq [int][TimeStampsWin32]::Text($qty)) 'generated timestamp count differs from quantity'
+  foreach($line in $lines) {
+    Assert ($line -match '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$') "custom clock-token output invalid: $line"
+  }
+  Note 'custom {HH}:{mm}:{ss} template generates the requested count of formatted timestamps'
   Wait-Visible $copy $true 'Results copy action'
   Note ("Generate produced {0} characters of timestamp text" -f $generated.Length)
   Assert ([TimeStampsWin32]::PostMessage($main,0x0010,[IntPtr]::Zero,[IntPtr]::Zero)) 'could not close application'

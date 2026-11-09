@@ -15,7 +15,13 @@ import (
 	"time"
 )
 
-const appVersion = "2.3.0"
+const appVersion = "2.5"
+
+// Keep validation and formatting on the same list of supported placeholders.
+var timestampLayouts = []struct{ token, layout string }{
+	{"{yyyy}", "2006"}, {"{yy}", "06"}, {"{MM}", "01"}, {"{dd}", "02"},
+	{"{HH}", "15"}, {"{mm}", "04"}, {"{ss}", "05"}, {"{ddd}", "Mon"},
+}
 
 // Settings are independent of the Windows interface and stored in a user-writable directory.
 type Settings struct {
@@ -55,7 +61,11 @@ func (s Settings) validate() error {
 	if s.WindowStart < 0 || s.WindowStart > 23 || s.WindowEnd < 0 || s.WindowEnd > 23 {
 		return errors.New("posting hours must be between 0 and 23")
 	}
-	if !strings.Contains(s.Template, "{time}") && !strings.Contains(s.Template, "{date}") && !strings.Contains(s.Template, "{yyyy}") {
+	hasToken := strings.Contains(s.Template, "{time}") || strings.Contains(s.Template, "{date}")
+	for _, token := range timestampLayouts {
+		hasToken = hasToken || strings.Contains(s.Template, token.token)
+	}
+	if !hasToken {
 		return errors.New("template must contain a timestamp placeholder, such as {time} or {date}")
 	}
 	if len(s.Template) > 2000 {
@@ -99,34 +109,43 @@ func randBetween(r io.Reader, min, max int64) (int64, error) {
 }
 
 // NightlySession is the permitted interval that begins on the given calendar day.
-// Start==end denotes an unrestricted 24-hour interval.
+// Start==end denotes a full calendar day (23 or 25 hours at DST changes).
 func nightlySession(day time.Time, startHour, endHour int) (time.Time, time.Time) {
 	y, m, d := day.Date()
-	base := time.Date(y, m, d, 0, 0, 0, 0, day.Location())
-	start := base.Add(time.Duration(startHour) * time.Hour)
-	if startHour == endHour {
-		return start, start.Add(24 * time.Hour)
-	}
-	end := base.Add(time.Duration(endHour) * time.Hour)
+	start := postingBoundary(y, m, d, startHour, day.Location())
 	if endHour <= startHour {
-		end = end.Add(24 * time.Hour)
+		d++
 	}
+	end := postingBoundary(y, m, d, endHour, day.Location())
 	return start, end
 }
 
+// Construct local clock hours, rather than elapsed hours after midnight.
+// Go may normalize a nonexistent spring-forward hour backward. Move it
+// forward across the gap so a requested future opening cannot land earlier.
+func postingBoundary(y int, m time.Month, d, hour int, loc *time.Location) time.Time {
+	boundary := time.Date(y, m, d, hour, 0, 0, 0, loc)
+	by, bm, bd := boundary.Date()
+	bh, bmin, bs := boundary.Clock()
+	want := time.Date(y, m, d, hour, 0, 0, 0, time.UTC)
+	wall := time.Date(by, bm, bd, bh, bmin, bs, 0, time.UTC)
+	if delta := want.Sub(wall); delta > 0 {
+		boundary = boundary.Add(delta)
+	}
+	return boundary
+}
+
 func allowedAt(t time.Time, s Settings) bool {
-	if !s.RestrictHours {
+	if !s.RestrictHours || s.WindowStart == s.WindowEnd {
 		return true
 	}
-	// Check today's and yesterday's session to support midnight wrap.
-	for i := -1; i <= 0; i++ {
-		d := t.AddDate(0, 0, i)
-		a, b := nightlySession(d, s.WindowStart, s.WindowEnd)
-		if !t.Before(a) && t.Before(b) {
-			return true
-		}
+	// Compare clock hours directly, including both occurrences of a repeated
+	// autumn hour. Equal endpoints mean unrestricted hours.
+	hour := t.Hour()
+	if s.WindowStart < s.WindowEnd {
+		return hour >= s.WindowStart && hour < s.WindowEnd
 	}
-	return false
+	return hour >= s.WindowStart || hour < s.WindowEnd
 }
 
 func nextPermitted(t time.Time, s Settings) time.Time {
@@ -135,13 +154,12 @@ func nextPermitted(t time.Time, s Settings) time.Time {
 	}
 	// Search a nearby interval; no infinite loops, even with crossing-midnight windows.
 	var earliest time.Time
-	for i := -1; i <= 2; i++ {
-		start, end := nightlySession(t.AddDate(0, 0, i), s.WindowStart, s.WindowEnd)
-		if !end.After(t) {
-			continue
-		}
-		if start.Before(t) {
-			start = t
+	y, m, d := t.Date()
+	for i := 0; i <= 2; i++ {
+		day := time.Date(y, m, d+i, 0, 0, 0, 0, t.Location())
+		start, _ := nightlySession(day, s.WindowStart, s.WindowEnd)
+		if start.Before(t) || !allowedAt(start, s) {
+			continue // A spring-forward transition may skip the whole window.
 		}
 		if earliest.IsZero() || start.Before(earliest) {
 			earliest = start
@@ -200,9 +218,8 @@ func Generate(s Settings, previous *time.Time, r io.Reader) ([]time.Time, error)
 				if e != nil {
 					return nil, e
 				}
-				_, end := nightlySession(current, s.WindowStart, s.WindowEnd)
 				adjusted := current.Add(time.Duration(jitter) * time.Second)
-				if adjusted.Before(end) {
+				if allowedAt(adjusted, s) {
 					current = adjusted
 				}
 			}
@@ -221,14 +238,9 @@ func Generate(s Settings, previous *time.Time, r io.Reader) ([]time.Time, error)
 func Format(t time.Time, s Settings) string {
 	date := t.Format(s.DateLayout)
 	clock := t.Format(s.TimeLayout)
-	vals := map[string]string{
-		"{time}": clock, "{date}": date, "{yyyy}": t.Format("2006"), "{yy}": t.Format("06"),
-		"{MM}": t.Format("01"), "{dd}": t.Format("02"), "{HH}": t.Format("15"),
-		"{mm}": t.Format("04"), "{ss}": t.Format("05"), "{ddd}": t.Format("Mon"),
-	}
-	replacements := make([]string, 0, len(vals)*2)
-	for k, v := range vals {
-		replacements = append(replacements, k, v)
+	replacements := []string{"{time}", clock, "{date}", date}
+	for _, token := range timestampLayouts {
+		replacements = append(replacements, token.token, t.Format(token.layout))
 	}
 	return strings.NewReplacer(replacements...).Replace(s.Template)
 }
