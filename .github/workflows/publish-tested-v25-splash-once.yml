@@ -1,0 +1,33 @@
+name: One-time tested TimeStamps 2.5 splash release update
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-tested-v25-splash-once.yml'
+jobs:
+  update-v25:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download successfully tested six-second splash build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh run view 42634266159 --json conclusion,headSha --jq '.conclusion+" "+.headSha'
+          test "$(gh run view 42634266159 --json conclusion --jq .conclusion)" = "success"
+          gh run download 42634266159 --name 'TimeStamps-2.5-Windows' --dir dist
+          test -s 'dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe'
+          test -s 'dist/TimeStamps.exe'
+          test -s 'dist/Uninstall-TimeStamps.exe'
+          sha256sum dist/*.exe
+      - name: Publish one tested replacement under existing v2.5 filename
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view v2.5 --json tagName
+          gh release upload v2.5 'dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe' 'dist/TimeStamps.exe' 'dist/Uninstall-TimeStamps.exe' --clobber
+          gh release edit v2.5 --title 'TimeStamps 2.5 — Updated by NightLife' --latest --notes 'TimeStamps 2.5 for 64-bit Windows 10/11. The six-second startup splash now explicitly draws the approved NightLife serpent logo from the embedded Windows icon. Windows build, unit tests, live-logo draw check, painted pixels, installed startup timing (6.2 seconds), 15 Format/Setup transitions, generation, upgrades and removal all passed on the hosted Windows runner. The owner PC, Norton and Windows 10 were not tested. Unsigned freeware. This is a one-time asset replacement; routine builds do not overwrite the published installer.'
+          gh release view v2.5 --json assets --jq '.assets[].name'
