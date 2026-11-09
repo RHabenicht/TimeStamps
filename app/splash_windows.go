@@ -22,15 +22,21 @@ const (
 )
 
 var (
-	procPeekMessage         = dllUser32.NewProc("PeekMessageW")
-	procDestroyWindow       = dllUser32.NewProc("DestroyWindow")
-	procStretchDIBits       = dllGdi32.NewProc("StretchDIBits")
-	procSetDIBitsToDevice   = dllGdi32.NewProc("SetDIBitsToDevice")
-	procSetWindowPos        = dllUser32.NewProc("SetWindowPos")
-	procSetForegroundWindow = dllUser32.NewProc("SetForegroundWindow")
-	procBringWindowToTop    = dllUser32.NewProc("BringWindowToTop")
-	procInvalidateSplash    = dllUser32.NewProc("InvalidateRect")
-	procIsWindowVisible     = dllUser32.NewProc("IsWindowVisible")
+	procPeekMessage                          = dllUser32.NewProc("PeekMessageW")
+	procDestroyWindow                        = dllUser32.NewProc("DestroyWindow")
+	procStretchDIBits                        = dllGdi32.NewProc("StretchDIBits")
+	procSetDIBitsToDevice                    = dllGdi32.NewProc("SetDIBitsToDevice")
+	procCreateCompatibleDC                   = dllGdi32.NewProc("CreateCompatibleDC")
+	procCreateDIBSection                     = dllGdi32.NewProc("CreateDIBSection")
+	procDeleteDC                             = dllGdi32.NewProc("DeleteDC")
+	procBitBlt                               = dllGdi32.NewProc("BitBlt")
+	splashStretchCall       splashRasterCall = procStretchDIBits.Call
+	splashDirectCopyCall    splashRasterCall = procSetDIBitsToDevice.Call
+	procSetWindowPos                         = dllUser32.NewProc("SetWindowPos")
+	procSetForegroundWindow                  = dllUser32.NewProc("SetForegroundWindow")
+	procBringWindowToTop                     = dllUser32.NewProc("BringWindowToTop")
+	procInvalidateSplash                     = dllUser32.NewProc("InvalidateRect")
+	procIsWindowVisible                      = dllUser32.NewProc("IsWindowVisible")
 	startupSplash           splashBitmap
 	startupSplashScaled     splashBitmap
 	startupSplashRenderer   string
@@ -55,9 +61,10 @@ func splashHeader(bmp splashBitmap) dibHeader {
 }
 
 // Try native scaling first. If a driver rejects it, copy software-scaled pixels
-// at 1:1 size using a separate GDI operation. Tests inject a failed stretch call
-// and verify the actual pixels written by SetDIBitsToDevice.
-func drawSplashArtwork(hdc uintptr, source, scaled splashBitmap, stretch splashRasterCall) (string, error) {
+// at 1:1 size using a separate GDI operation. If both DIB transfer APIs fail,
+// copy through a software-filled Windows bitmap instead. Tests inject both
+// failures and verify the actual pixels painted by the production popup.
+func drawSplashArtwork(hdc uintptr, source, scaled splashBitmap, stretch, directCopy splashRasterCall) (string, error) {
 	if hdc == 0 || len(source.BGRA) == 0 || len(scaled.BGRA) == 0 {
 		return "none", fmt.Errorf("invalid splash drawing surface or pixels")
 	}
@@ -78,14 +85,50 @@ func drawSplashArtwork(hdc uintptr, source, scaled splashBitmap, stretch splashR
 	recordSplashFailure("StretchDIBits; trying software-scaled artwork", fmt.Errorf("scanlines=%d: %v", int32(n), stretchErr))
 	stretchLines := n
 	header = splashHeader(scaled)
-	n, _, copyErr := procSetDIBitsToDevice.Call(hdc, 0, 0, uintptr(scaled.Width), uintptr(scaled.Height),
+	n, _, copyErr := directCopy(hdc, 0, 0, uintptr(scaled.Width), uintptr(scaled.Height),
 		0, 0, 0, uintptr(scaled.Height), uintptr(unsafe.Pointer(&scaled.BGRA[0])),
 		uintptr(unsafe.Pointer(&header)), DIB_RGB_COLORS)
 	if n == uintptr(scaled.Height) {
 		return "SetDIBitsToDevice (software scaled)", nil
 	}
-	return "none", fmt.Errorf("StretchDIBits scanlines=0x%x (%v); SetDIBitsToDevice scanlines=%d/%d (%v)",
-		stretchLines, stretchErr, n, scaled.Height, copyErr)
+	recordSplashFailure("SetDIBitsToDevice; trying memory bitmap", fmt.Errorf("scanlines=%d/%d: %v", n, scaled.Height, copyErr))
+	if err := copySplashBitmap(hdc, scaled); err == nil {
+		return "BitBlt (software-filled DIB section)", nil
+	} else {
+		return "none", fmt.Errorf("StretchDIBits scanlines=0x%x (%v); SetDIBitsToDevice scanlines=%d/%d (%v); bitmap copy: %w",
+			stretchLines, stretchErr, n, scaled.Height, copyErr, err)
+	}
+}
+
+// Fill a Windows-owned memory bitmap directly, then copy it to the window.
+// Unlike the two DIB transfer APIs above, BitBlt receives no raw DIB buffer.
+func copySplashBitmap(hdc uintptr, scaled splashBitmap) error {
+	dc, _, err := procCreateCompatibleDC.Call(hdc)
+	if dc == 0 {
+		return fmt.Errorf("CreateCompatibleDC: %v", err)
+	}
+	defer procDeleteDC.Call(dc)
+	header := splashHeader(scaled)
+	var bits unsafe.Pointer
+	bitmap, _, err := procCreateDIBSection.Call(hdc, uintptr(unsafe.Pointer(&header)), DIB_RGB_COLORS,
+		uintptr(unsafe.Pointer(&bits)), 0, 0)
+	if bitmap == 0 {
+		return fmt.Errorf("CreateDIBSection: %v", err)
+	}
+	defer procDeleteObject.Call(bitmap)
+	if bits == nil {
+		return fmt.Errorf("CreateDIBSection returned no pixels")
+	}
+	copy(unsafe.Slice((*byte)(bits), len(scaled.BGRA)), scaled.BGRA)
+	old, _, err := procSelectObject.Call(dc, bitmap)
+	if old == 0 || old == ^uintptr(0) {
+		return fmt.Errorf("SelectObject: %v", err)
+	}
+	defer procSelectObject.Call(dc, old)
+	if ok, _, err := procBitBlt.Call(hdc, 0, 0, uintptr(scaled.Width), uintptr(scaled.Height), dc, 0, 0, SRCCOPY); ok == 0 {
+		return fmt.Errorf("BitBlt: %v", err)
+	}
+	return nil
 }
 
 // Record creation/rendering failures, including recovery through software
@@ -136,7 +179,7 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 					startupSplashScaled = scaleSplash(startupSplash, int(rc.Right), int(rc.Bottom))
 				}
 				var drawErr error
-				startupSplashRenderer, drawErr = drawSplashArtwork(hdc, startupSplash, startupSplashScaled, procStretchDIBits.Call)
+				startupSplashRenderer, drawErr = drawSplashArtwork(hdc, startupSplash, startupSplashScaled, splashStretchCall, splashDirectCopyCall)
 				startupSplashDrawn = drawErr == nil
 				if drawErr != nil {
 					recordSplashFailure("drawSplashArtwork", drawErr)
