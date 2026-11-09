@@ -13,13 +13,18 @@ public static class TimeStampsWin32 {
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr h, StringBuilder s, int capacity);
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint processId);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
-    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern bool SetWindowText(IntPtr h, string text);
     [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr parent, int id);
     [DllImport("user32.dll")] public static extern int GetDlgCtrlID(IntPtr h);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint message, IntPtr w, IntPtr l);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern IntPtr SendMessage(IntPtr h, uint message, IntPtr w, StringBuilder text);
     [DllImport("user32.dll", SetLastError=true)]
     static extern IntPtr SendMessageTimeout(IntPtr h, uint message, IntPtr w, IntPtr l, uint flags, uint timeoutMs, out IntPtr result);
+    [DllImport("user32.dll", EntryPoint="SendMessageTimeoutW", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern IntPtr SendTextTimeout(IntPtr h, uint message, IntPtr w, string text, uint flags, uint timeoutMs, out IntPtr result);
+    public static bool SetText(IntPtr h, string text) {
+        IntPtr result;
+        return SendTextTimeout(h,0x000C,IntPtr.Zero,text,2,2500,out result)!=IntPtr.Zero && result!=IntPtr.Zero;
+    }
     public static string Class(IntPtr h) {
         var b=new StringBuilder(128); GetClassName(h,b,b.Capacity); return b.ToString();
     }
@@ -177,7 +182,8 @@ try {
   Send-Command $main 202 # Format
   Wait-Visible $preset $true 'Format preset'
   $template=[TimeStampsWin32]::GetDlgItem($main,109)
-  Assert ([TimeStampsWin32]::SetWindowText($template,'{HH}:{mm}:{ss}')) 'could not set custom clock-token template'
+  Assert ([TimeStampsWin32]::SetText($template,'{HH}:{mm}:{ss}')) 'could not set custom clock-token template'
+  Assert ([TimeStampsWin32]::Text($template) -eq '{HH}:{mm}:{ss}') 'custom template edit did not retain the requested text'
   Send-Command $main 114 # Generate
   $output=[TimeStampsWin32]::FindOutputEdit($main)
   Assert ($output -ne [IntPtr]::Zero) 'output EDIT control not found'
