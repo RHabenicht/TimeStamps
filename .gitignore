@@ -1,0 +1,6 @@
+# Local build artifacts and user configuration
+*.tmp
+*.log
+settings.json
+.DS_Store
+Thumbs.db

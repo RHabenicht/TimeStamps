@@ -1,0 +1,34 @@
+TimeStamps 2.3 — Regression report (November 6, 2026)
+
+REPORTED ISSUE
+The Format page locks up in TimeStamps 2.2 on the user's Windows monitor.
+Cause not independently reproduced; Win32 nested control notification path
+identified as a plausible contributor from static review.
+
+CHANGES
+- The nav buttons now schedule page changes via WM_APP_SWITCHPAGE/PostMessageW.
+- Win32 command events cannot reenter page visibility updates.
+- Preset selection now schedules its edits through WM_APP_APPLYPRESET.
+- UI no longer modifies navigation button captions while switching pages.
+- The output font remains fixed at 16-point Consolas.
+
+AUTOMATED CHECKS
+- All Go unit tests including 576 posting windows: PASS
+- All four Format presets produce expected results: PASS
+- Static Win32 page/preset routing regression assertions: PASS
+- 1360x768 and 125% layout geometry tests: PASS
+- Windows 64-bit GUI cross-compile: PASS
+- Win32 GUI executable identified by PE header: PASS
+- Interactive Windows 10/11 UI test: NOT RUN (Windows unavailable)
+- Actual reported Format-tab lockup verification: NOT RUN (requires user test)
+
+TEST INSTRUCTIONS
+1. Extract the entire 2.3 ZIP to a NEW folder, separate from 2.2.
+2. Launch TimeStamps.exe.
+3. Click FORMAT repeatedly, then SETUP and RESULTS, and return to FORMAT.
+4. Select Classic, Forum, ISO 8601 and Date then time format presets.
+5. Generate timestamps, verify output and test the custom template field.
+6. If it still locks, report which click triggers it (Format button,
+   preset dropdown, date style, time style, or custom template edit).
+
+Keep the 2.2 folder as a backup until 2.3 is verified.

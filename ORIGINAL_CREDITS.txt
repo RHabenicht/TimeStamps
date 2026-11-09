@@ -1,0 +1,16 @@
+Original source-header attribution, 1997:
+Requirements by Branson Hagerty <bhagerty@thunder.temple.edu>
+Program by Scott GrantSmith <ScottMGS@BitSmart.com>
+
+Original author statement (preserved in full in Source/Original_1997/uBHTimeStamps.pas):
+"This program and its source is hereby released as Freeware. All legalities
+implied. You can use the program. You can change the program. You just can't
+claim credit for writing it or charge any money for distributing it. Use this
+program at your own risk. While I don't believe that it will harm any computer
+that it is run on I do not promise that it won't."
+
+Current project credit:
+Updated by NightLife
+
+The original programmer and original requirements author are credited
+separately from the modernization.
