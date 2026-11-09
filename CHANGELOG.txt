@@ -1,0 +1,56 @@
+2.3 — NIGHTLIFE FORMAT-TAB STABILITY PATCH (2026-11-06)
+ - Reworked SETUP / FORMAT / RESULTS navigation so page changes are posted
+   to the Windows message queue after the originating button event returns.
+ - Re-entrant command notifications are ignored during visibility changes.
+ - Removed dynamic text-changing of navigation buttons during each switch.
+ - Applied Format preset changes outside the ComboBox selection event.
+ - Retained all format presets, including Classic, Forum, ISO 8601,
+   Date then time, custom templates and user-selected date/time layouts.
+ - Added format preset output and Windows event-route regression tests.
+ - Generated 64-bit Windows GUI executable and ran automated Go tests.
+ - Native Windows desktop runtime / reported lockup reproduction: NOT RUN.
+
+2.2 — NIGHTLIFE ACCESSIBILITY & STABILITY PATCH (2026-11-06)
+ - Removed A+ / A− controls and dynamic result font replacement.
+ - Fixed output display at 16 pt Consolas for legibility on 1360×768 / 125% scaling.
+ - Removed font-resize commands and adjusted the Results toolbar to fit.
+ - No changes to timestamp generation, save/load or copy behavior.
+ - Cause of the reported crash is not proven without a Windows runtime reproduction.
+
+TimeStamps 2.0 — Updated by NightLife
+Date: 2026-11-06
+
+- Reconstructed the original Delphi 3 Windows 95-era program as a native,
+  portable 64-bit Windows 10/11 desktop application.
+- Redesigned the interface using Segoe UI fonts, a dark header, light
+  settings/output panels, and a custom window icon.
+- Preserved randomized sequential timestamp generation.
+- Fixed overnight-hours calculation so times obey allowed posting windows.
+- Added explicit validation for time gaps and quantity.
+- Added format presets and editable token templates for date/time strings.
+- Added Copy selected, Copy all, and Save .txt actions.
+- Added safe overwrite/clear/exit confirmations for unsaved output.
+- Saves settings under the current user's Windows profile, not beside the EXE.
+- Migrates the original TimeStamps.ini format without changing that file.
+- Added persistent continuation between sessions and ability to start fresh
+  by changing the start date.
+- Preserved original 1997 programmer and requirements credits.
+- Added automated tests for all 576 hour-window combinations.
+
+Known remaining verification:
+- The executable was cross-compiled on Linux and has NOT been executed on
+  Windows 10/11. Windows UI/runtime testing is still required.
+- Native controls use the Windows desktop theme; on-screen appearance may
+  differ with system scaling and Windows version.
+
+Version 2.1 — Accessibility layout update, November 2026
+- Replaced oversized fixed-height two-column form with dedicated Setup, Format,
+  and Results views.
+- Start window now fits within desktop work area instead of forcing a 790-pixel
+  high starting window.
+- Default GUI type increased to 13 pt; timestamp output increased to 15 pt with
+  accessible A-/A+ text scaling buttons (12–20 pt).
+- Larger controls, persistent Generate button and responsive output view.
+- Preserved all generation, formatting, clipboard and save features.
+- Added deterministic layout boundary tests for 1360x768 at 125% and smaller
+  client sizes. Windows GUI runtime verification is still pending.
