@@ -1,3 +1,11 @@
+TimeStamps 2.5 — splash logo and duration correction (2026-11-09)
+- Keep release/application version 2.5.
+- Display the six-second splash at startup.
+- Draw the NightLife serpent logo explicitly using embedded PE icon resources and DrawIconEx.
+- Fallback to the installed TimeStamps.ico if the embedded icon cannot be loaded.
+- Report logoLoaded/logoDrawn in splash_status.txt and verify them on Windows.
+- Do not automatically overwrite published v2.5 files with every source commit.
+
 TimeStamps 2.5 — splash foreground and diagnostics (2026-11-09)
 - Request topmost foreground placement and force the first paint of the splash.
 - Check GDI drawing errors; display a readable fallback on paint failure.

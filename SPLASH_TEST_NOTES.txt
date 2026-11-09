@@ -2,8 +2,8 @@ TimeStamps 2.5 startup splash
 
 - The splash appears when TimeStamps starts, not while installing or uninstalling.
 - A topmost and foreground popup presents the approved dice-free NightLife serpent image.
-- WM_PAINT is explicitly requested and graphics errors have a readable text fallback.
-- The main window is created after the four-second splash period.
+- An embedded NightLife serpent logo icon is explicitly rendered on the right side and reported in splash_status.txt. WM_PAINT is explicitly requested and graphics errors have a readable text fallback.
+- The main window is created after the six-second splash period.
 - Last status: %APPDATA%\TimeStamps\splash_status.txt.
 - Failure details: %APPDATA%\TimeStamps\splash_errors.log.
 - Verify actual rendered pixels; the existence of a window is not proof artwork appeared.

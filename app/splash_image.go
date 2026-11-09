@@ -69,4 +69,4 @@ func fitSplash(workW, workH, imageW, imageH int) (int, int) {
 	return w, h
 }
 
-const splashDurationMs = 4000
+const splashDurationMs = 6000

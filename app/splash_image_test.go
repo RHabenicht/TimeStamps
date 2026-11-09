@@ -13,8 +13,8 @@ func TestSplashArtworkDecodes(t *testing.T) {
 	if len(bmp.BGRA) != bmp.Width*bmp.Height*4 {
 		t.Fatal("invalid pixel buffer length")
 	}
-	if splashDurationMs != 4000 {
-		t.Fatal("splash should display for four seconds")
+	if splashDurationMs != 6000 {
+		t.Fatal("splash should display for six seconds")
 	}
 }
 func TestSplashFitsAccessibleMonitor(t *testing.T) {

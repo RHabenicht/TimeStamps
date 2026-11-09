@@ -78,8 +78,8 @@ beside the EXE. TimeStamps.ico supplies the application window icon.
 
 
 STARTUP SPLASH (2.5)
-- The approved purple serpent artwork (without dice) is included in TimeStamps.exe.
-- The splash is shown once on application startup for four seconds.
+- The approved purple serpent artwork (without dice) and embedded serpent logo icon are included in TimeStamps.exe. The logo is drawn explicitly on top of the artwork.
+- The splash is shown once on application startup for six seconds.
 - The main window is created only after the splash closes.
 - The splash fits entirely inside the usable Windows work area, including
   1360x768 at 125% display scaling with a normal Windows taskbar.

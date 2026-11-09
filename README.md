@@ -8,7 +8,7 @@ TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential
 
 ## TimeStamps 2.5
 
-- Explicitly brings the startup splash to the foreground and requests a fresh image paint.
+- Explicitly brings the six-second startup splash to the foreground, requests a fresh image paint, and draws the embedded NightLife serpent logo as a separate visible element.
 - Writes a one-file startup diagnostic to `%APPDATA%\TimeStamps\splash_status.txt` and errors to `splash_errors.log`.
 - Shows a readable fallback message if the artwork cannot be drawn.
 - **The splash is part of application startup, not the installer or uninstaller.**
@@ -16,7 +16,7 @@ TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential
 
 ## Other TimeStamps 2.5 features
 
-- Four-second NightLife splash screen, displayed **before** the main window is created.
+- Six-second NightLife splash screen, displayed **before** the main window is created.
 - Purple serpent application icon embedded directly in the application, setup, and uninstaller, rather than depending on an external sidecar icon.
 - Accessible Windows interface designed around 1360×768 at 125% display scaling, with large text.
 - Setup, Format, and Results screens; sequential timestamp generation and overnight windows; format presets; copy/save output.

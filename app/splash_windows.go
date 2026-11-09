@@ -18,6 +18,7 @@ const (
 	PM_REMOVE        = 0x0001
 	DIB_RGB_COLORS   = 0
 	SRCCOPY          = 0x00CC0020
+	DI_NORMAL        = 0x0003
 )
 
 var (
@@ -29,10 +30,14 @@ var (
 	procBringWindowToTop = dllUser32.NewProc("BringWindowToTop")
 	procInvalidateSplash = dllUser32.NewProc("InvalidateRect")
 	procIsWindowVisible = dllUser32.NewProc("IsWindowVisible")
+	procDrawIconEx     = dllUser32.NewProc("DrawIconEx")
+	procDestroyIcon    = dllUser32.NewProc("DestroyIcon")
 	startupSplash     splashBitmap
 	splashInfo        dibHeader
 	startupSplashPainted bool
 	startupSplashDrawn bool
+	startupLogoIcon uintptr
+	startupLogoDrawn bool
 )
 
 type dibHeader struct {
@@ -74,6 +79,57 @@ func writeSplashStatus(stage string) {
 		[]byte(fmt.Sprintf("%s\n%s\n", time.Now().Format(time.RFC3339), stage)), 0600)
 }
 
+// The PE contains RT_GROUP_ICON ID 1. The installed .ico is the fallback
+// for machines with stricter executable-resource loading.
+func loadStartupLogo(instance uintptr) uintptr {
+	icon, _, _ := procLoadImage.Call(instance, uintptr(1), IMAGE_ICON, 160, 160, 0)
+	if icon != 0 {
+		return icon
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		recordSplashFailure("LoadStartupLogo", err)
+		return 0
+	}
+	ico := filepath.Join(filepath.Dir(exe), "TimeStamps.ico")
+	icon, _, _ = procLoadImage.Call(0, uintptr(unsafe.Pointer(u16(ico))), IMAGE_ICON, 160, 160, LR_LOADFROMFILE)
+	if icon == 0 {
+		recordSplashFailure("LoadStartupLogo", fmt.Errorf("embedded icon 1 and %q unavailable", ico))
+	}
+	return icon
+}
+
+// The art is drawn first. The explicit logo is a separate paint operation,
+// so a background image without its logo cannot silently pass validation.
+func drawStartupLogo(hdc uintptr, client rect) {
+	if startupLogoIcon == 0 {
+		return
+	}
+	width := int(client.Right - client.Left)
+	height := int(client.Bottom - client.Top)
+	size := height / 3
+	if size > 144 { size = 144 }
+	if size < 48 { size = 48 }
+	margin := size / 6
+	if margin < 14 { margin = 14 }
+	x := width - size - 2*margin
+	y := (height - size) / 2
+	if x < margin { x = margin }
+	if y < margin { y = margin }
+	backing := rect{Left:int32(x-margin/2), Top:int32(y-margin/2), Right:int32(x+size+margin/2), Bottom:int32(y+size+margin/2)}
+	b, _, _ := procCreateSolidBrush.Call(rgb(23, 8, 37))
+	if b != 0 {
+		procFillRect.Call(hdc, uintptr(unsafe.Pointer(&backing)), b)
+		procDeleteObject.Call(b)
+	}
+	ok, _, drawErr := procDrawIconEx.Call(hdc, uintptr(x), uintptr(y), startupLogoIcon, uintptr(size), uintptr(size), 0, 0, DI_NORMAL)
+	if ok == 0 {
+		recordSplashFailure("DrawIconEx", drawErr)
+	} else {
+		startupLogoDrawn = true
+	}
+}
+
 func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	switch message {
 	case WM_ERASEBKGND:
@@ -103,6 +159,7 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 					startupSplashDrawn = true
 				}
 			}
+			drawStartupLogo(hdc, rc)
 			startupSplashPainted = true
 			procEndPaint.Call(hwnd, uintptr(unsafe.Pointer(&ps)))
 		}
@@ -116,7 +173,7 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 }
 
 // showStartupSplash displays the splash BEFORE the main window is created.
-// The 4-second countdown starts after ShowWindow/UpdateWindow.
+// The 6-second countdown starts after ShowWindow/UpdateWindow.
 // It pumps Win32 messages on the window's own (locked) OS thread to ensure
 // painting and interactions remain responsive. The main window is constructed
 // only after the splash has closed, so it cannot cover the splash.
@@ -142,12 +199,20 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		return false
 	}
 	startupSplash = bmp
+	startupLogoIcon = loadStartupLogo(instance)
+	defer func() {
+		if startupLogoIcon != 0 {
+			procDestroyIcon.Call(startupLogoIcon)
+			startupLogoIcon = 0
+		}
+	}()
 	splashInfo = dibHeader{Size: uint32(unsafe.Sizeof(dibHeader{})), Width: int32(bmp.Width), Height: -int32(bmp.Height),
 		Planes: 1, BitCount: 32, Compression: 0, SizeImage: uint32(len(bmp.BGRA))}
 	x := int(work.Left) + (int(work.Right-work.Left)-w)/2
 	y := int(work.Top) + (int(work.Bottom-work.Top)-h)/2
 	startupSplashPainted = false
 	startupSplashDrawn = false
+	startupLogoDrawn = false
 	sh, _, e := procCreateWindowEx.Call(WS_EX_TOPMOST|WS_EX_TOOLWINDOW, uintptr(unsafe.Pointer(name)),
 		uintptr(unsafe.Pointer(u16("TimeStamps — Updated by NightLife"))), WS_POPUP,
 		uintptr(x), uintptr(y), uintptr(w), uintptr(h), 0, 0, instance, 0)
@@ -170,10 +235,10 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		recordSplashFailure("UpdateWindow", fmt.Errorf("WM_PAINT not delivered synchronously"))
 	}
 	visible, _, _ := procIsWindowVisible.Call(sh)
-	writeSplashStatus(fmt.Sprintf("Created at %d,%d size %dx%d; visible=%t; painted=%t; imageDrawn=%t",
-		x, y, w, h, visible != 0, startupSplashPainted, startupSplashDrawn))
+	writeSplashStatus(fmt.Sprintf("Created at %d,%d size %dx%d; visible=%t; painted=%t; imageDrawn=%t; logoLoaded=%t; logoDrawn=%t",
+		x, y, w, h, visible != 0, startupSplashPainted, startupSplashDrawn, startupLogoIcon != 0, startupLogoDrawn))
 	started := time.Now()
-	for time.Since(started) < 4*time.Second {
+	for time.Since(started) < time.Duration(splashDurationMs)*time.Millisecond {
 		// Drain queued messages so the splash actually repaints on Windows.
 		var m msg
 		for {
@@ -192,6 +257,6 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		time.Sleep(12 * time.Millisecond)
 	}
 	procDestroyWindow.Call(sh)
-	writeSplashStatus(fmt.Sprintf("Completed four-second startup splash; visible=%t; WM_PAINT=%t; artworkDrawn=%t", visible != 0, startupSplashPainted, startupSplashDrawn))
+	writeSplashStatus(fmt.Sprintf("Completed six-second startup splash; visible=%t; WM_PAINT=%t; artworkDrawn=%t; logoLoaded=%t; logoDrawn=%t", visible != 0, startupSplashPainted, startupSplashDrawn, startupLogoIcon != 0, startupLogoDrawn))
 	return true
 }

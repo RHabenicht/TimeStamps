@@ -152,9 +152,9 @@ try {
   $main=Wait-Top 'NightLifeTimeStampsV2' '' $appProcess.Id 25
   Wait-Visible $main $true 'main window'
   $delay=([DateTime]::UtcNow-$splashSeen).TotalSeconds
-  Assert ($delay -ge 2.5 -and $delay -le 14) "splash-to-main timing outside expected range: $delay"
+  Assert ($delay -ge 5 -and $delay -le 16) "splash-to-main timing outside expected range: $delay"
   Assert ([TimeStampsWin32]::IsWindowVisible($main)) 'main window invisible'
-  Note ("real application shows splash before main window (~{0:N1}s observed)" -f $delay)
+  Note ("real application shows splash before main window (~{0:N1}s observed, target six seconds)" -f $delay)
   $preset=[TimeStampsWin32]::GetDlgItem($main,108)
   $qty=[TimeStampsWin32]::GetDlgItem($main,102)
   $copy=[TimeStampsWin32]::GetDlgItem($main,116)
