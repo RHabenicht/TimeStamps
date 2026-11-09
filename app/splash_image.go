@@ -70,3 +70,22 @@ func fitSplash(workW, workH, imageW, imageH int) (int, int) {
 }
 
 const splashDurationMs = 6000
+
+// Scale the complete artwork in software for drivers that reject StretchDIBits.
+// The source remains unchanged; no crop, overlay or external image is involved.
+func scaleSplash(bmp splashBitmap, width, height int) splashBitmap {
+	if width <= 0 || height <= 0 || width > 8192 || height > 8192 ||
+		bmp.Width <= 0 || bmp.Height <= 0 || len(bmp.BGRA) != bmp.Width*bmp.Height*4 {
+		return splashBitmap{}
+	}
+	out := splashBitmap{Width: width, Height: height, BGRA: make([]byte, width*height*4)}
+	for y := 0; y < height; y++ {
+		sy := y * bmp.Height / height
+		for x := 0; x < width; x++ {
+			sx := x * bmp.Width / width
+			from, to := (sy*bmp.Width+sx)*4, (y*width+x)*4
+			copy(out.BGRA[to:to+4], bmp.BGRA[from:from+4])
+		}
+	}
+	return out
+}

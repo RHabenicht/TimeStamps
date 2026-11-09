@@ -6,7 +6,7 @@ $Out = Join-Path $Root 'dist'
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 Push-Location $App
 try {
-  go test ./...
+  go test -v ./...
   if ($LASTEXITCODE -ne 0) { throw 'TimeStamps Go unit tests failed' }
   go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps.exe') .
   if ($LASTEXITCODE -ne 0) { throw 'TimeStamps application build failed' }
