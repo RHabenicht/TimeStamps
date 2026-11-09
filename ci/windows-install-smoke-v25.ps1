@@ -1,4 +1,4 @@
-# Test the actually published v2.5 setup on a disposable Windows GitHub runner.
+# Test the locally built v2.5 candidate on a disposable Windows GitHub runner.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -TypeDefinition @'
@@ -19,6 +19,12 @@ public static class TimeStampsWin32 {
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern IntPtr SendMessage(IntPtr h, uint message, IntPtr w, StringBuilder text);
     [DllImport("user32.dll", SetLastError=true)]
     static extern IntPtr SendMessageTimeout(IntPtr h, uint message, IntPtr w, IntPtr l, uint flags, uint timeoutMs, out IntPtr result);
+    [DllImport("user32.dll", EntryPoint="SendMessageTimeoutW", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern IntPtr SendTextTimeout(IntPtr h, uint message, IntPtr w, string text, uint flags, uint timeoutMs, out IntPtr result);
+    public static bool SetText(IntPtr h, string text) {
+        IntPtr result;
+        return SendTextTimeout(h,0x000C,IntPtr.Zero,text,2,2500,out result)!=IntPtr.Zero && result!=IntPtr.Zero;
+    }
     public static string Class(IntPtr h) {
         var b=new StringBuilder(128); GetClassName(h,b,b.Capacity); return b.ToString();
     }
@@ -78,17 +84,29 @@ function Choice([IntPtr]$h, [int]$id) {
   Assert ([TimeStampsWin32]::PostMessage($h,0x0111,[IntPtr]$id,[IntPtr]::Zero)) "could not post selection $id to dialog"
   Start-Sleep -Milliseconds 500
 }
+function Wait-DialogBody([IntPtr]$h) {
+  # A dialog HWND can appear before Windows creates its static text control.
+  $deadline=[DateTime]::UtcNow.AddSeconds(10)
+  do {
+    $body=[TimeStampsWin32]::DialogBody($h)
+    if (-not [string]::IsNullOrWhiteSpace($body)) { return $body }
+    Start-Sleep -Milliseconds 100
+  } while ([DateTime]::UtcNow -lt $deadline)
+  throw 'Timed out waiting for dialog text to initialize'
+}
 function Run-Installer([string]$setupExe, [bool]$makeDesktop) {
   $p=Start-Process -FilePath $setupExe -PassThru
   try {
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 30
-    Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'Windows 10/11') 'initial installer prompt unexpected'
+    $message=Wait-DialogBody $dlg
+    Assert ($message -match 'Windows 10/11') 'initial installer prompt unexpected'
+    Assert ($message -match 'six-second splash') 'installer splash duration text is outdated'
     Choice $dlg 6
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 45
-    Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'desktop shortcut') 'desktop shortcut prompt unexpected'
+    Assert ((Wait-DialogBody $dlg) -match 'desktop shortcut') 'desktop shortcut prompt unexpected'
     Choice $dlg $(if($makeDesktop){6}else{7})
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 60
-    $message=[TimeStampsWin32]::DialogBody($dlg)
+    $message=Wait-DialogBody $dlg
     Assert ($message -match 'installed successfully') "setup reported a failure or unexpected result: $message"
     Choice $dlg 7 # Do not auto-start; smoke test launches the app directly.
     Assert ($p.WaitForExit(15000)) 'installer did not exit'
@@ -121,7 +139,7 @@ Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'dist/TimeStamps_2.5_Set
 $hash=(Get-FileHash $setupPath -Algorithm SHA256).Hash
 $bytes=(Get-Item $setupPath).Length
 Assert ($bytes -gt 1000000) 'release download size unexpected'
-Write-Host "Released installer SHA256: $hash, bytes: $bytes"
+Write-Host "Candidate installer SHA256: $hash, bytes: $bytes"
 Write-Host "Windows: $([Environment]::OSVersion.VersionString)"
 Write-Host "Session: $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)"
 try {
@@ -130,7 +148,7 @@ try {
   foreach($file in @('TimeStamps.exe','TimeStamps.exe.manifest','TimeStamps.ico','splash_screen.png','Uninstall-TimeStamps.exe')) {
     Assert (Test-Path -LiteralPath (Join-Path $dest $file)) "installed file missing: $file"
   }
-  Note 'released setup installed executable, icon, splash, manifest and uninstaller'
+  Note 'candidate setup installed executable, icon, splash, manifest and uninstaller'
   Assert (Test-Path -LiteralPath $startShortcut) 'Start Menu shortcut missing'
   Assert (Test-Path -LiteralPath $registry) 'Installed Apps registry entry missing'
   $uninstallReg=Get-ItemProperty -LiteralPath $registry
@@ -172,11 +190,22 @@ try {
     Wait-Visible $preset $false 'Format preset hidden on Setup'
   }
   Note '15 live Format/Setup transitions and preset changes responded without a hung Win32 message'
+  Send-Command $main 202 # Format
+  Wait-Visible $preset $true 'Format preset'
+  $template=[TimeStampsWin32]::GetDlgItem($main,109)
+  Assert ([TimeStampsWin32]::SetText($template,'{HH}:{mm}:{ss}')) 'could not set custom clock-token template'
+  Assert ([TimeStampsWin32]::Text($template) -eq '{HH}:{mm}:{ss}') 'custom template edit did not retain the requested text'
   Send-Command $main 114 # Generate
   $output=[TimeStampsWin32]::FindOutputEdit($main)
   Assert ($output -ne [IntPtr]::Zero) 'output EDIT control not found'
   $generated=[TimeStampsWin32]::Text($output)
   Assert ($generated.Trim().Length -gt 0) 'Generate did not produce timestamp output'
+  $lines=@($generated.Trim() -split '\r?\n')
+  Assert ($lines.Count -eq [int][TimeStampsWin32]::Text($qty)) 'generated timestamp count differs from quantity'
+  foreach($line in $lines) {
+    Assert ($line -match '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$') "custom clock-token output invalid: $line"
+  }
+  Note 'custom {HH}:{mm}:{ss} template generates the requested count of formatted timestamps'
   Wait-Visible $copy $true 'Results copy action'
   Note ("Generate produced {0} characters of timestamp text" -f $generated.Length)
   Assert ([TimeStampsWin32]::PostMessage($main,0x0010,[IntPtr]::Zero,[IntPtr]::Zero)) 'could not close application'
@@ -188,11 +217,11 @@ try {
   $uninstall=Start-Process -FilePath (Join-Path $dest 'Uninstall-TimeStamps.exe') -PassThru
   try {
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Uninstall' $uninstall.Id 20
-    Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'Remove TimeStamps') 'unexpected uninstall prompt'
+    Assert ((Wait-DialogBody $dlg) -match 'Remove TimeStamps') 'unexpected uninstall prompt'
     Choice $dlg 6
     Assert ($uninstall.WaitForExit(10000)) 'uninstaller parent did not exit'
     $workerDialog=Wait-Top '#32770' 'TimeStamps 2.5 Uninstall' 0 30
-    $result=[TimeStampsWin32]::DialogBody($workerDialog)
+    $result=Wait-DialogBody $workerDialog
     Assert ($result -match 'was removed') "uninstaller failed: $result"
     Choice $workerDialog 1
   } finally {

@@ -26,7 +26,7 @@ func main() {
 	if _, err := os.Stat(filepath.Join(dir, "TimeStamps.exe")); err == nil {
 		verb = "Upgrade"
 	}
-	if winutil.Message(title, fmt.Sprintf("%s TimeStamps 2.5 for Windows 10/11 (64-bit)?\n\nInstallation folder:\n%s\n\nA Start Menu shortcut and Windows Apps uninstall entry will be created.\nAdministrator privileges are not required.\n\nExisting settings are preserved.\n\nThe four-second splash appears when TimeStamps starts, not during setup.", verb, dir), winutil.ConfirmIcon) != winutil.Yes {
+	if winutil.Message(title, fmt.Sprintf("%s TimeStamps 2.5 for Windows 10/11 (64-bit)?\n\nInstallation folder:\n%s\n\nA Start Menu shortcut and Windows Apps uninstall entry will be created.\nAdministrator privileges are not required.\n\nExisting settings are preserved.\n\nThe six-second splash appears when TimeStamps starts, not during setup.", verb, dir), winutil.ConfirmIcon) != winutil.Yes {
 		return
 	}
 	desktop := winutil.Message(title, "Create a desktop shortcut?", winutil.ConfirmIcon) == winutil.Yes
