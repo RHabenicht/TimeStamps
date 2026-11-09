@@ -24,8 +24,15 @@ var (
 	procPeekMessage   = dllUser32.NewProc("PeekMessageW")
 	procDestroyWindow = dllUser32.NewProc("DestroyWindow")
 	procStretchDIBits = dllGdi32.NewProc("StretchDIBits")
+	procSetWindowPos = dllUser32.NewProc("SetWindowPos")
+	procSetForegroundWindow = dllUser32.NewProc("SetForegroundWindow")
+	procBringWindowToTop = dllUser32.NewProc("BringWindowToTop")
+	procInvalidateSplash = dllUser32.NewProc("InvalidateRect")
+	procIsWindowVisible = dllUser32.NewProc("IsWindowVisible")
 	startupSplash     splashBitmap
 	splashInfo        dibHeader
+	startupSplashPainted bool
+	startupSplashDrawn bool
 )
 
 type dibHeader struct {
@@ -57,6 +64,16 @@ func recordSplashFailure(step string, err error) {
 	}
 }
 
+// Store the latest splash status to diagnose machines that fail to show it.
+func writeSplashStatus(stage string) {
+	dir, e := os.UserConfigDir()
+	if e != nil { return }
+	path := filepath.Join(dir, "TimeStamps")
+	if os.MkdirAll(path, 0700) != nil { return }
+	_ = os.WriteFile(filepath.Join(path, "splash_status.txt"),
+		[]byte(fmt.Sprintf("%s\n%s\n", time.Now().Format(time.RFC3339), stage)), 0600)
+}
+
 func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	switch message {
 	case WM_ERASEBKGND:
@@ -68,10 +85,25 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 			var rc rect
 			procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&rc)))
 			if len(startupSplash.BGRA) > 0 {
-				procStretchDIBits.Call(hdc, 0, 0, uintptr(rc.Right), uintptr(rc.Bottom),
+				n, _, drawErr := procStretchDIBits.Call(hdc, 0, 0, uintptr(rc.Right), uintptr(rc.Bottom),
 					0, 0, uintptr(startupSplash.Width), uintptr(startupSplash.Height),
 					uintptr(unsafe.Pointer(&startupSplash.BGRA[0])), uintptr(unsafe.Pointer(&splashInfo)), DIB_RGB_COLORS, SRCCOPY)
+				if n == 0 || int32(n) == -1 {
+					recordSplashFailure("StretchDIBits", fmt.Errorf("scanlines=%d: %v", int32(n), drawErr))
+					// Display a readable message if the graphics driver rejects the DIB.
+					b, _, _ := procCreateSolidBrush.Call(rgb(28, 8, 50))
+					procFillRect.Call(hdc, uintptr(unsafe.Pointer(&rc)), b)
+					procDeleteObject.Call(b)
+					procSetBkMode.Call(hdc, TRANSPARENT)
+					procSetTextColor.Call(hdc, rgb(255, 255, 255))
+					caption := u16("TimeStamps — Updated by NightLife")
+					procDrawText.Call(hdc, uintptr(unsafe.Pointer(caption)), uintptr(^uint32(0)),
+						uintptr(unsafe.Pointer(&rc)), DT_SINGLELINE|DT_VCENTER)
+				} else {
+					startupSplashDrawn = true
+				}
 			}
+			startupSplashPainted = true
 			procEndPaint.Call(hwnd, uintptr(unsafe.Pointer(&ps)))
 		}
 		return 0
@@ -90,6 +122,7 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 // only after the splash has closed, so it cannot cover the splash.
 func showStartupSplash(instance uintptr, work rect) bool {
 	// The caller locks the current OS thread before any HWND is created.
+	writeSplashStatus("Preparing TimeStamps 2.5.1 startup splash")
 	bmp, err := decodeSplash(splashPNG)
 	if err != nil {
 		recordSplashFailure("decodeSplash", err)
@@ -100,7 +133,7 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		recordSplashFailure("fitSplash", fmt.Errorf("invalid work area %v", work))
 		return false
 	}
-	name := u16("NightLifeTimeStampsSplashV25")
+	name := u16("NightLifeTimeStampsSplashV251")
 	wc := wndclassex{Size: uint32(unsafe.Sizeof(wndclassex{})), WndProc: syscall.NewCallback(startupSplashWndProc), Instance: instance, ClassName: name}
 	cursor, _, _ := procLoadCursor.Call(0, 32512)
 	wc.Cursor = cursor
@@ -113,6 +146,8 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		Planes: 1, BitCount: 32, Compression: 0, SizeImage: uint32(len(bmp.BGRA))}
 	x := int(work.Left) + (int(work.Right-work.Left)-w)/2
 	y := int(work.Top) + (int(work.Bottom-work.Top)-h)/2
+	startupSplashPainted = false
+	startupSplashDrawn = false
 	sh, _, e := procCreateWindowEx.Call(WS_EX_TOPMOST|WS_EX_TOOLWINDOW, uintptr(unsafe.Pointer(name)),
 		uintptr(unsafe.Pointer(u16("TimeStamps — Updated by NightLife"))), WS_POPUP,
 		uintptr(x), uintptr(y), uintptr(w), uintptr(h), 0, 0, instance, 0)
@@ -121,7 +156,22 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		return false
 	}
 	procShowWindow.Call(sh, SW_SHOW)
+	// Topmost does not necessarily imply foreground: request both.
+	if ok, _, posErr := procSetWindowPos.Call(sh, ^uintptr(0), 0, 0, 0, 0, 0x0001|0x0002|0x0040); ok == 0 {
+		recordSplashFailure("SetWindowPos", posErr)
+	}
+	procBringWindowToTop.Call(sh)
+	if ok, _, _ := procSetForegroundWindow.Call(sh); ok == 0 {
+		recordSplashFailure("SetForegroundWindow", fmt.Errorf("foreground request was rejected"))
+	}
+	procInvalidateSplash.Call(sh, 0, 0)
 	procUpdateWindow.Call(sh)
+	if !startupSplashPainted {
+		recordSplashFailure("UpdateWindow", fmt.Errorf("WM_PAINT not delivered synchronously"))
+	}
+	visible, _, _ := procIsWindowVisible.Call(sh)
+	writeSplashStatus(fmt.Sprintf("Created at %d,%d size %dx%d; visible=%t; painted=%t; imageDrawn=%t",
+		x, y, w, h, visible != 0, startupSplashPainted, startupSplashDrawn))
 	started := time.Now()
 	for time.Since(started) < 4*time.Second {
 		// Drain queued messages so the splash actually repaints on Windows.
@@ -142,5 +192,6 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		time.Sleep(12 * time.Millisecond)
 	}
 	procDestroyWindow.Call(sh)
+	writeSplashStatus(fmt.Sprintf("Completed four-second startup splash; visible=%t; WM_PAINT=%t; artworkDrawn=%t", visible != 0, startupSplashPainted, startupSplashDrawn))
 	return true
 }

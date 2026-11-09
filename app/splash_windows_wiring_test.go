@@ -22,7 +22,7 @@ func TestSplashStartsBeforeMainWindow(t *testing.T) {
 	if lock < 0 || show < 0 || create < 0 || !(lock < show && show < create) {
 		t.Fatal("main must lock OS thread and show splash before main HWND")
 	}
-	for _, need := range []string{"procShowWindow.Call(sh, SW_SHOW)", "procUpdateWindow.Call(sh)", "procPeekMessage.Call", "time.Since(started) < 4*time.Second", "procStretchDIBits.Call", "WS_EX_TOPMOST|WS_EX_TOOLWINDOW"} {
+	for _, need := range []string{"procShowWindow.Call(sh, SW_SHOW)", "procUpdateWindow.Call(sh)", "procPeekMessage.Call", "time.Since(started) < 4*time.Second", "procStretchDIBits.Call", "WS_EX_TOPMOST|WS_EX_TOOLWINDOW", "procSetWindowPos.Call", "procSetForegroundWindow.Call", "writeSplashStatus"} {
 		if !strings.Contains(splash, need) {
 			t.Errorf("splash missing %q", need)
 		}

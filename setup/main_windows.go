@@ -16,7 +16,7 @@ import (
 var payload []byte
 
 func main() {
-	title := "TimeStamps 2.5 Setup — NightLife"
+	title := "TimeStamps 2.5.1 Setup — NightLife"
 	dir, err := winutil.InstallDir()
 	if err != nil {
 		winutil.Message(title, err.Error(), winutil.ErrorIcon)
@@ -26,7 +26,7 @@ func main() {
 	if _, err := os.Stat(filepath.Join(dir, "TimeStamps.exe")); err == nil {
 		verb = "Upgrade"
 	}
-	if winutil.Message(title, fmt.Sprintf("%s TimeStamps 2.5 for Windows 10/11 (64-bit)?\n\nInstallation folder:\n%s\n\nA Start Menu shortcut and Windows Apps uninstall entry will be created.\nAdministrator privileges are not required.\n\nExisting settings are preserved.", verb, dir), winutil.ConfirmIcon) != winutil.Yes {
+	if winutil.Message(title, fmt.Sprintf("%s TimeStamps 2.5.1 for Windows 10/11 (64-bit)?\n\nInstallation folder:\n%s\n\nA Start Menu shortcut and Windows Apps uninstall entry will be created.\nAdministrator privileges are not required.\n\nExisting settings are preserved.\n\nThe four-second splash appears when TimeStamps starts, not during setup.", verb, dir), winutil.ConfirmIcon) != winutil.Yes {
 		return
 	}
 	desktop := winutil.Message(title, "Create a desktop shortcut?", winutil.ConfirmIcon) == winutil.Yes
@@ -56,7 +56,7 @@ func main() {
 		winutil.Message(title, "TimeStamps application files were installed, but Windows integration needs attention:\n\n"+joinWarnings(warnings)+"\n\nYou can run TimeStamps.exe directly from the installation folder.", winutil.ErrorIcon)
 		return
 	}
-	if winutil.Message(title, "TimeStamps 2.5 installed successfully.\n\nOpen TimeStamps now?", winutil.ConfirmIcon) == winutil.Yes {
+	if winutil.Message(title, "TimeStamps 2.5.1 installed successfully.\n\nOpen TimeStamps now?", winutil.ConfirmIcon) == winutil.Yes {
 		cmd := exec.Command(filepath.Join(dir, "TimeStamps.exe"))
 		cmd.Dir = dir
 		if err := cmd.Start(); err != nil {

@@ -1,9 +1,9 @@
-TimeStamps 2.5 Windows Native Installer Sources
+TimeStamps 2.5.1 Windows Native Installer Sources
 
 The package contains Go source for the single-file, per-user Windows setup,
 its independent uninstaller, and the embedded payload.zip built from the
-approved TimeStamps 2.5 release (including splash). The app's own source is
-in TimeStamps_2.5_Source_Updated_by_NightLife.zip (separate artifact).
+approved TimeStamps 2.5.1 release (including splash). The app's own source is
+in TimeStamps_2.5.1_Source_Updated_by_NightLife.zip (separate artifact).
 
 Requirements: Go 1.23 or later. No external Go modules.
 

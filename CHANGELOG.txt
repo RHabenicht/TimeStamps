@@ -1,3 +1,11 @@
+TimeStamps 2.5.1 — splash foreground and diagnostics (2026-11-09)
+- Request topmost foreground placement and force the first paint of the splash.
+- Check GDI drawing errors; display a readable fallback on paint failure.
+- Write status to %APPDATA%\TimeStamps\splash_status.txt and failures to splash_errors.log.
+- Retain the four-second duration and approved purple serpent artwork.
+- Correct About and uninstaller version labels.
+- Require Windows-runner pixel, installation, Format-page and uninstall tests before publishing.
+
 TimeStamps 2.5 — NightLife icon and splash fix (2026-11-09)
 - Embedded seven sizes of the purple serpent icon directly in the Windows application, setup, and uninstaller.
 - Display the 4-second splash BEFORE initializing the main Windows interface.
