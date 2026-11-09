@@ -1,0 +1,19 @@
+name: Set TimeStamps 2.5 as latest without rebuilding
+on:
+  push:
+    paths:
+      - '.github/workflows/mark-v25-latest.yml'
+jobs:
+  mark-latest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Mark existing 2.5 release as latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view v2.5 --json tagName
+          gh release edit v2.5 --latest
+          test "$(gh release list --limit 5 --json tagName,isLatest --jq '.[] | select(.isLatest == true) | .tagName')" = "v2.5"
