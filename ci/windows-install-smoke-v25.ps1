@@ -1,4 +1,4 @@
-# Test the actually published v2.5.1 setup on a disposable Windows GitHub runner.
+# Test the actually published v2.5 setup on a disposable Windows GitHub runner.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -TypeDefinition @'
@@ -81,13 +81,13 @@ function Choice([IntPtr]$h, [int]$id) {
 function Run-Installer([string]$setupExe, [bool]$makeDesktop) {
   $p=Start-Process -FilePath $setupExe -PassThru
   try {
-    $dlg=Wait-Top '#32770' 'TimeStamps 2.5.1 Setup' $p.Id 30
+    $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 30
     Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'Windows 10/11') 'initial installer prompt unexpected'
     Choice $dlg 6
-    $dlg=Wait-Top '#32770' 'TimeStamps 2.5.1 Setup' $p.Id 45
+    $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 45
     Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'desktop shortcut') 'desktop shortcut prompt unexpected'
     Choice $dlg $(if($makeDesktop){6}else{7})
-    $dlg=Wait-Top '#32770' 'TimeStamps 2.5.1 Setup' $p.Id 60
+    $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 60
     $message=[TimeStampsWin32]::DialogBody($dlg)
     Assert ($message -match 'installed successfully') "setup reported a failure or unexpected result: $message"
     Choice $dlg 7 # Do not auto-start; smoke test launches the app directly.
@@ -108,16 +108,16 @@ function Wait-Visible([IntPtr]$h, [bool]$expected, [string]$label) {
   } while ([DateTime]::UtcNow -lt $deadline)
   throw "FAIL: $label visibility expected=$expected"
 }
-$release='https://github.com/RHabenicht/TimeStamps/releases/download/v2.5.1/TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe'
-$setupPath=Join-Path $env:RUNNER_TEMP 'TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe'
+$release='https://github.com/RHabenicht/TimeStamps/releases/download/v2.5/TimeStamps_2.5_Setup_Updated_by_NightLife.exe'
+$setupPath=Join-Path $env:RUNNER_TEMP 'TimeStamps_2.5_Setup_Updated_by_NightLife.exe'
 $dest=Join-Path $env:LOCALAPPDATA 'Programs\TimeStamps'
 $registry='HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\NightLife-TimeStamps'
 $programs=[Environment]::GetFolderPath('Programs')
 $startShortcut=Join-Path $programs 'NightLife\TimeStamps.lnk'
 $desktopShortcut=Join-Path ([Environment]::GetFolderPath('Desktop')) 'TimeStamps.lnk'
 $appProcess=$null
-Write-Host 'Testing locally built 2.5.1 installer candidate before publication...'
-Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'dist/TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe') -Destination $setupPath
+Write-Host 'Testing locally built 2.5 installer candidate before publication...'
+Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'dist/TimeStamps_2.5_Setup_Updated_by_NightLife.exe') -Destination $setupPath
 $hash=(Get-FileHash $setupPath -Algorithm SHA256).Hash
 $bytes=(Get-Item $setupPath).Length
 Assert ($bytes -gt 1000000) 'release download size unexpected'
@@ -134,8 +134,8 @@ try {
   Assert (Test-Path -LiteralPath $startShortcut) 'Start Menu shortcut missing'
   Assert (Test-Path -LiteralPath $registry) 'Installed Apps registry entry missing'
   $uninstallReg=Get-ItemProperty -LiteralPath $registry
-  Assert ($uninstallReg.DisplayVersion -eq '2.5.1') 'Installed Apps version mismatch'
-  Note 'Start Menu shortcut and version 2.5.1 Installed Apps registration created'
+  Assert ($uninstallReg.DisplayVersion -eq '2.5') 'Installed Apps version mismatch'
+  Note 'Start Menu shortcut and version 2.5 Installed Apps registration created'
   $legacyINI=Join-Path $dest 'TimeStamps.ini'
   $userFile=Join-Path $dest 'user_notes_do_not_delete.txt'
   [IO.File]::WriteAllText($legacyINI, '[TimeStamps]'+[Environment]::NewLine+'CustomMarker=retain-on-upgrade'+[Environment]::NewLine)
@@ -146,7 +146,7 @@ try {
   Assert (Test-Path -LiteralPath $desktopShortcut) 'requested desktop shortcut missing'
   Note 'real setup upgrade preserves legacy INI and unrelated files; creates desktop shortcut'
   $appProcess=Start-Process -FilePath (Join-Path $dest 'TimeStamps.exe') -PassThru -WorkingDirectory $dest
-  $splash=Wait-Top 'NightLifeTimeStampsSplashV251' '' $appProcess.Id 20
+  $splash=Wait-Top 'NightLifeTimeStampsSplashV25' '' $appProcess.Id 20
   Assert ([TimeStampsWin32]::IsWindowVisible($splash)) 'splash exists but is not visible'
   $splashSeen=[DateTime]::UtcNow
   $main=Wait-Top 'NightLifeTimeStampsV2' '' $appProcess.Id 25
@@ -187,11 +187,11 @@ try {
   $appProcess=$null
   $uninstall=Start-Process -FilePath (Join-Path $dest 'Uninstall-TimeStamps.exe') -PassThru
   try {
-    $dlg=Wait-Top '#32770' 'TimeStamps 2.5.1 Uninstall' $uninstall.Id 20
+    $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Uninstall' $uninstall.Id 20
     Assert ([TimeStampsWin32]::DialogBody($dlg) -match 'Remove TimeStamps') 'unexpected uninstall prompt'
     Choice $dlg 6
     Assert ($uninstall.WaitForExit(10000)) 'uninstaller parent did not exit'
-    $workerDialog=Wait-Top '#32770' 'TimeStamps 2.5.1 Uninstall' 0 30
+    $workerDialog=Wait-Top '#32770' 'TimeStamps 2.5 Uninstall' 0 30
     $result=[TimeStampsWin32]::DialogBody($workerDialog)
     Assert ($result -match 'was removed') "uninstaller failed: $result"
     Choice $workerDialog 1
@@ -206,7 +206,7 @@ try {
   Assert ((Get-Content -LiteralPath $legacyINI -Raw).Contains('retain-on-upgrade')) 'uninstaller deleted legacy INI'
   Assert ((Get-Content -LiteralPath $userFile -Raw) -eq 'user-created data retained') 'uninstaller deleted user file'
   Note 'real uninstaller removed executable and integration while preserving user files'
-  Write-Host 'RUNTIME SMOKE RESULT: PASS (2.5.1 candidate installer; Windows runner)'
+  Write-Host 'RUNTIME SMOKE RESULT: PASS (2.5 candidate installer; Windows runner)'
 } finally {
   if($appProcess -and -not $appProcess.HasExited){Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue}
 }

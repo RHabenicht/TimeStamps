@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	title := "TimeStamps 2.5.1 Uninstall"
+	title := "TimeStamps 2.5 Uninstall"
 	dir, err := winutil.InstallDir()
 	if err != nil {
 		winutil.Message(title, err.Error(), winutil.ErrorIcon)
@@ -51,7 +51,7 @@ func main() {
 	_ = cmd.Process.Release()
 }
 func worker(dir string) {
-	title := "TimeStamps 2.5.1 Uninstall"
+	title := "TimeStamps 2.5 Uninstall"
 	// Allow the original uninstaller to exit and release its file lock.
 	var err error
 	for i := 0; i < 20; i++ {

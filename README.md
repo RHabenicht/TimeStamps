@@ -2,11 +2,11 @@
 
 TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential, randomized timestamps. This repository contains the NightLife modernization, the original program credits, and a single-file Windows installer.
 
-**Current installer:** [Download TimeStamps 2.5.1 Setup (.exe)](https://github.com/RHabenicht/TimeStamps/releases/download/v2.5.1/TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe)
+**Current installer:** [Download TimeStamps 2.5 Setup (.exe)](https://github.com/RHabenicht/TimeStamps/releases/download/v2.5/TimeStamps_2.5_Setup_Updated_by_NightLife.exe)
 
-[Full v2.5.1 release](https://github.com/RHabenicht/TimeStamps/releases/tag/v2.5.1) | [Previous v2.5 release](https://github.com/RHabenicht/TimeStamps/releases/tag/v2.5)
+[TimeStamps 2.5 release](https://github.com/RHabenicht/TimeStamps/releases/tag/v2.5)
 
-## TimeStamps 2.5.1
+## TimeStamps 2.5
 
 - Explicitly brings the startup splash to the foreground and requests a fresh image paint.
 - Writes a one-file startup diagnostic to `%APPDATA%\TimeStamps\splash_status.txt` and errors to `splash_errors.log`.
@@ -14,7 +14,7 @@ TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential
 - **The splash is part of application startup, not the installer or uninstaller.**
 - Updates About and uninstaller version labels.
 
-## Retained TimeStamps 2.5 features
+## Other TimeStamps 2.5 features
 
 - Four-second NightLife splash screen, displayed **before** the main window is created.
 - Purple serpent application icon embedded directly in the application, setup, and uninstaller, rather than depending on an external sidecar icon.
@@ -62,4 +62,4 @@ See [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) for preserved requirements an
 
 ## Status
 
-The NightLife version is a reconstruction of the original desktop application, not the 1997 Delphi executable. It has now been launched and exercised on a hosted Windows 11 runner, but the specific physical 1360×768 display at 125% scaling and Windows 10 are still unverified. Version 2.5.1 corrects the outdated uninstaller and About dialog version labels. The splash rendering evidence comes from a hosted Windows runner; this is not a guarantee of visibility on every physical PC.
+The NightLife version is a reconstruction of the original desktop application, not the 1997 Delphi executable. It has now been launched and exercised on a hosted Windows 11 runner, but the specific physical 1360×768 display at 125% scaling and Windows 10 are still unverified. Version 2.5 corrects the outdated uninstaller and About dialog version labels. The splash rendering evidence comes from a hosted Windows runner; this is not a guarantee of visibility on every physical PC.

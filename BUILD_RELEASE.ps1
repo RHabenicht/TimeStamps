@@ -29,7 +29,7 @@ try {
   } finally { $zip.Dispose() }
   go test ./...
   if ($LASTEXITCODE -ne 0) { throw 'Installer Go unit tests failed' }
-  go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps_2.5.1_Setup_Updated_by_NightLife.exe') .
+  go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps_2.5_Setup_Updated_by_NightLife.exe') .
   if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
 } finally { Pop-Location }
 Write-Host "Finished builds under $Out"

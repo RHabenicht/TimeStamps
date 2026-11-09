@@ -48,7 +48,7 @@ func regAdd(name, value, typ string) error {
 func RegisterUninstaller(dir string) error {
 	values := [][3]string{
 		{"DisplayName", "TimeStamps — Updated by NightLife", "REG_SZ"},
-		{"DisplayVersion", "2.5.1", "REG_SZ"},
+		{"DisplayVersion", "2.5", "REG_SZ"},
 		{"Publisher", "NightLife", "REG_SZ"},
 		{"InstallLocation", dir, "REG_SZ"},
 		{"DisplayIcon", filepath.Join(dir, "TimeStamps.exe") + ",0", "REG_SZ"},
@@ -95,7 +95,7 @@ $uninstall=$env:TS_UNINSTALL
 $link=$shell.CreateShortcut((Join-Path $folder 'TimeStamps.lnk'))
 $link.TargetPath=$app
 $link.WorkingDirectory=(Split-Path -Parent $app)
-$link.Description='TimeStamps 2.5.1 - Updated by NightLife'
+$link.Description='TimeStamps 2.5 - Updated by NightLife'
 $link.IconLocation=$env:TS_ICON
 $link.Save()
 $link=$shell.CreateShortcut((Join-Path $folder 'Uninstall TimeStamps.lnk'))
@@ -108,7 +108,7 @@ if ($env:TS_DESKTOP -eq 'yes') {
   $link=$shell.CreateShortcut((Join-Path $desktop 'TimeStamps.lnk'))
   $link.TargetPath=$app
   $link.WorkingDirectory=(Split-Path -Parent $app)
-  $link.Description='TimeStamps 2.5.1 - Updated by NightLife'
+  $link.Description='TimeStamps 2.5 - Updated by NightLife'
   $link.IconLocation=$env:TS_ICON
   $link.Save()
 }`

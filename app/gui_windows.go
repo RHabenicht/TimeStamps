@@ -698,7 +698,7 @@ func saveFile() {
 	status("Saved: " + filename)
 }
 func showAbout() {
-	info("TimeStamps 2.5.1 — accessible Windows 10/11 edition\n\nUpdated by NightLife\n\nOriginal program: Scott GrantSmith (1997)\nOriginal requirements: Branson Hagerty\n\nRebuilt from the original Delphi 3 freeware source.\nFreeware. Not for sale.\n\nCreates sequential randomized timestamps for fictional documents, message logs and Shadowrun handouts.")
+	info("TimeStamps 2.5 — accessible Windows 10/11 edition\n\nUpdated by NightLife\n\nOriginal program: Scott GrantSmith (1997)\nOriginal requirements: Branson Hagerty\n\nRebuilt from the original Delphi 3 freeware source.\nFreeware. Not for sale.\n\nCreates sequential randomized timestamps for fictional documents, message logs and Shadowrun handouts.")
 }
 func handler(cmd int) {
 	switch cmd {

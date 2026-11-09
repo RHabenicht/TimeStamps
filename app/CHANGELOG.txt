@@ -1,4 +1,4 @@
-TimeStamps 2.5.1 — splash foreground and diagnostics (2026-11-09)
+TimeStamps 2.5 — splash foreground and diagnostics (2026-11-09)
 - Request topmost foreground placement and force the first paint of the splash.
 - Check GDI drawing errors; display a readable fallback on paint failure.
 - Write status to %APPDATA%\TimeStamps\splash_status.txt and failures to splash_errors.log.

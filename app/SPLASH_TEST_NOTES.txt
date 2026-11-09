@@ -1,4 +1,4 @@
-TimeStamps 2.5.1 startup splash
+TimeStamps 2.5 startup splash
 
 - The splash appears when TimeStamps starts, not while installing or uninstalling.
 - A topmost and foreground popup presents the approved dice-free NightLife serpent image.

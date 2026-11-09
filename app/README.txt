@@ -1,4 +1,4 @@
-TIMESTAMPS 2.5.1 — UPDATED BY NIGHTLIFE
+TIMESTAMPS 2.5 — UPDATED BY NIGHTLIFE
 =====================================
 Portable Windows 10/11 application (64-bit).
 
@@ -77,7 +77,7 @@ external manifest requests modern Windows common-control styling; keep it
 beside the EXE. TimeStamps.ico supplies the application window icon.
 
 
-STARTUP SPLASH (2.5.1)
+STARTUP SPLASH (2.5)
 - The approved purple serpent artwork (without dice) is included in TimeStamps.exe.
 - The splash is shown once on application startup for four seconds.
 - The main window is created only after the splash closes.

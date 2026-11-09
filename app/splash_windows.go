@@ -122,7 +122,7 @@ func startupSplashWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) 
 // only after the splash has closed, so it cannot cover the splash.
 func showStartupSplash(instance uintptr, work rect) bool {
 	// The caller locks the current OS thread before any HWND is created.
-	writeSplashStatus("Preparing TimeStamps 2.5.1 startup splash")
+	writeSplashStatus("Preparing TimeStamps 2.5 startup splash")
 	bmp, err := decodeSplash(splashPNG)
 	if err != nil {
 		recordSplashFailure("decodeSplash", err)
@@ -133,7 +133,7 @@ func showStartupSplash(instance uintptr, work rect) bool {
 		recordSplashFailure("fitSplash", fmt.Errorf("invalid work area %v", work))
 		return false
 	}
-	name := u16("NightLifeTimeStampsSplashV251")
+	name := u16("NightLifeTimeStampsSplashV25")
 	wc := wndclassex{Size: uint32(unsafe.Sizeof(wndclassex{})), WndProc: syscall.NewCallback(startupSplashWndProc), Instance: instance, ClassName: name}
 	cursor, _, _ := procLoadCursor.Call(0, 32512)
 	wc.Cursor = cursor

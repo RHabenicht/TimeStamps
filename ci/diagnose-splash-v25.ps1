@@ -1,4 +1,4 @@
-# Inspect actual pixels in released v2.5.1 splash, not merely HWND existence.
+# Inspect actual pixels in released v2.5 splash, not merely HWND existence.
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.Drawing
@@ -24,15 +24,15 @@ public static class SplashInspect {
       if (id!=(uint)pid) return true;
       var str=new StringBuilder(128);
       GetClassName(h,str,str.Capacity);
-      if (str.ToString()=="NightLifeTimeStampsSplashV251") {found=h;return false;}
+      if (str.ToString()=="NightLifeTimeStampsSplashV25") {found=h;return false;}
       return true;
     },IntPtr.Zero);
     return found;
   }
 }
 '@
-$url='https://github.com/RHabenicht/TimeStamps/releases/download/v2.5.1/TimeStamps.exe'
-$exe=Join-Path $env:RUNNER_TEMP 'TimeStamps-v2.5.1-release.exe'
+$url='https://github.com/RHabenicht/TimeStamps/releases/download/v2.5/TimeStamps.exe'
+$exe=Join-Path $env:RUNNER_TEMP 'TimeStamps-v2.5-release.exe'
 Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'dist/TimeStamps.exe') -Destination $exe
 Write-Host ('Candidate exe SHA256: '+(Get-FileHash $exe -Algorithm SHA256).Hash)
 $p=Start-Process -FilePath $exe -PassThru -WorkingDirectory $env:RUNNER_TEMP
