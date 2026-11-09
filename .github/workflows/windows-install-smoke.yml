@@ -1,0 +1,16 @@
+name: Published TimeStamps 2.5 installer Windows smoke
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ci/windows-install-smoke.ps1'
+      - '.github/workflows/windows-install-smoke.yml'
+jobs:
+  published-installer-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and exercise released installer, app, and uninstaller
+        shell: pwsh
+        run: .\ci\windows-install-smoke.ps1
