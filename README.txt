@@ -1,3 +1,7 @@
+HISTORICAL GUIDE — TIMESTAMPS 2.3 PORTABLE RELEASE
+
+This file describes the 2.3 portable release and its testing status in November 2026. For the current 2.5 installer, product details, and verification status, see README.md and app/README.txt. The instructions below apply to version 2.3.
+
 TIMESTAMPS 2.3 — UPDATED BY NIGHTLIFE
 =====================================
 Portable Windows 10/11 application (64-bit).
