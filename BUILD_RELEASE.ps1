@@ -27,7 +27,7 @@ try {
       [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$path,$name,[IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }
   } finally { $zip.Dispose() }
-  go test ./...
+  go test -v ./...
   if ($LASTEXITCODE -ne 0) { throw 'Installer Go unit tests failed' }
   go build -ldflags '-H windowsgui' -o (Join-Path $Out 'TimeStamps_2.5_Setup_Updated_by_NightLife.exe') .
   if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }

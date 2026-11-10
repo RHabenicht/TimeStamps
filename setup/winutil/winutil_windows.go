@@ -19,7 +19,33 @@ const (
 	Yes         = 6
 )
 
-var procMessageBox = syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW")
+var (
+	procMessageBox         = syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW")
+	procGetSystemDirectory = syscall.NewLazyDLL("kernel32.dll").NewProc("GetSystemDirectoryW")
+)
+
+// Resolve Windows' own tools through the OS, never PATH or the launch folder.
+// This also avoids running a same-named executable alongside an extracted setup.
+func systemCommand(program string, args ...string) (*exec.Cmd, error) {
+	var relative string
+	switch program {
+	case "reg.exe":
+		relative = program
+	case "powershell.exe":
+		relative = filepath.Join("WindowsPowerShell", "v1.0", program)
+	default:
+		return nil, fmt.Errorf("unsupported Windows helper %q", program)
+	}
+	var systemDir [32768]uint16
+	n, _, err := procGetSystemDirectory.Call(uintptr(unsafe.Pointer(&systemDir[0])), uintptr(len(systemDir)))
+	if n == 0 || n >= uintptr(len(systemDir)) {
+		return nil, fmt.Errorf("locate Windows system directory: length=%d: %v", n, err)
+	}
+	path := filepath.Join(syscall.UTF16ToString(systemDir[:n]), relative)
+	cmd := exec.Command(path, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	return cmd, nil
+}
 
 func Message(title, body string, flags uintptr) int {
 	p1, _ := syscall.UTF16PtrFromString(body)
@@ -38,7 +64,10 @@ func InstallDir() (string, error) {
 const UninstallRegistry = `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\NightLife-TimeStamps`
 
 func regAdd(name, value, typ string) error {
-	cmd := exec.Command("reg.exe", "ADD", UninstallRegistry, "/v", name, "/t", typ, "/d", value, "/f")
+	cmd, err := systemCommand("reg.exe", "ADD", UninstallRegistry, "/v", name, "/t", typ, "/d", value, "/f")
+	if err != nil {
+		return err
+	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("registry %s: %v: %s", name, err, strings.TrimSpace(string(out)))
@@ -65,16 +94,22 @@ func RegisterUninstaller(dir string) error {
 	return nil
 }
 func DeleteUninstallRegistry() error {
-	out, err := exec.Command("reg.exe", "DELETE", UninstallRegistry, "/f").CombinedOutput()
+	cmd, err := systemCommand("reg.exe", "DELETE", UninstallRegistry, "/f")
+	if err != nil {
+		return err
+	}
+	out, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(strings.ToLower(string(out)), "unable to find") {
 		return fmt.Errorf("remove Apps entry: %v: %s", err, string(out))
 	}
 	return nil
 }
 func runPowerShell(script string, envvars ...string) error {
-	cmd := exec.Command("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+	cmd, err := systemCommand("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+	if err != nil {
+		return err
+	}
 	cmd.Env = append(os.Environ(), envvars...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Windows shortcut operation: %v: %s", err, strings.TrimSpace(string(out)))

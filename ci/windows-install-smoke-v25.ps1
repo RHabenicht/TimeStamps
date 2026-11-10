@@ -94,8 +94,18 @@ function Wait-DialogBody([IntPtr]$h) {
   } while ([DateTime]::UtcNow -lt $deadline)
   throw 'Timed out waiting for dialog text to initialize'
 }
+function Start-CandidateProcess([string]$exe) {
+  # Reproduce the owner's missing system tools on PATH. UseShellExecute=false
+  # preserves this exact child environment, rather than rebuilding PATH.
+  $info=[Diagnostics.ProcessStartInfo]::new()
+  $info.FileName=$exe
+  $info.WorkingDirectory=[IO.Path]::GetDirectoryName($exe)
+  $info.UseShellExecute=$false
+  $info.Environment['PATH']=''
+  return [Diagnostics.Process]::Start($info)
+}
 function Run-Installer([string]$setupExe, [bool]$makeDesktop) {
-  $p=Start-Process -FilePath $setupExe -PassThru
+  $p=Start-CandidateProcess $setupExe
   try {
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Setup' $p.Id 30
     $message=Wait-DialogBody $dlg
@@ -142,6 +152,7 @@ Assert ($bytes -gt 1000000) 'release download size unexpected'
 Write-Host "Candidate installer SHA256: $hash, bytes: $bytes"
 Write-Host "Windows: $([Environment]::OSVersion.VersionString)"
 Write-Host "Session: $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)"
+Write-Host 'Installer, upgrade, application and uninstaller child processes run with empty PATH'
 try {
   Assert (-not (Test-Path -LiteralPath (Join-Path $dest 'TimeStamps.exe'))) 'runner already has TimeStamps installed'
   Run-Installer $setupPath $false
@@ -163,7 +174,7 @@ try {
   Assert ((Get-Content -LiteralPath $userFile -Raw) -eq 'user-created data retained') 'unrelated file changed on upgrade'
   Assert (Test-Path -LiteralPath $desktopShortcut) 'requested desktop shortcut missing'
   Note 'real setup upgrade preserves legacy INI and unrelated files; creates desktop shortcut'
-  $appProcess=Start-Process -FilePath (Join-Path $dest 'TimeStamps.exe') -PassThru -WorkingDirectory $dest
+  $appProcess=Start-CandidateProcess (Join-Path $dest 'TimeStamps.exe')
   $splash=Wait-Top 'NightLifeTimeStampsSplashV25' '' $appProcess.Id 20
   Assert ([TimeStampsWin32]::IsWindowVisible($splash)) 'splash exists but is not visible'
   $splashSeen=[DateTime]::UtcNow
@@ -214,7 +225,7 @@ try {
   Assert ($appProcess.WaitForExit(12000)) 'application did not exit on confirmation'
   Note 'application exits after unsaved output confirmation'
   $appProcess=$null
-  $uninstall=Start-Process -FilePath (Join-Path $dest 'Uninstall-TimeStamps.exe') -PassThru
+  $uninstall=Start-CandidateProcess (Join-Path $dest 'Uninstall-TimeStamps.exe')
   try {
     $dlg=Wait-Top '#32770' 'TimeStamps 2.5 Uninstall' $uninstall.Id 20
     Assert ((Wait-DialogBody $dlg) -match 'Remove TimeStamps') 'unexpected uninstall prompt'
