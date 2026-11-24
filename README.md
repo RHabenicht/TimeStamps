@@ -2,7 +2,9 @@
 
 TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential, randomized timestamps. This repository contains the NightLife modernization, the original program credits, and a single-file Windows installer.
 
-**Current installer:** [Download TimeStamps 2.5 Setup (.exe)](https://github.com/RHabenicht/TimeStamps/releases/download/v2.5/TimeStamps_2.5_Setup_Updated_by_NightLife.exe)
+**Current installer:** [Download the corrected TimeStamps 2.5 Setup ZIP](https://github.com/RHabenicht/TimeStamps/actions/runs/42658831355/artifacts/13692489028)
+
+The original v2.5 application and setup downloads were withdrawn on November 24, 2026 after the splash failure report. Use the corrected candidate above; sign in to GitHub, extract the ZIP, and run the setup EXE. This artifact expires February 7, 2027. The older v2.5.1 release also predates the recovery fixes.
 
 [TimeStamps 2.5 release](https://github.com/RHabenicht/TimeStamps/releases/tag/v2.5)
 
@@ -25,11 +27,11 @@ TimeStamps is a Windows 10/11 (64-bit) desktop utility that generates sequential
 
 ## Install
 
-Download the `.exe` file linked above and run it. The installer is not code-signed. Windows may show a publisher warning. The application runs offline and does not require the Delphi runtime or Go.
+Download the ZIP linked above, extract it, and run `TimeStamps_2.5_Setup_Updated_by_NightLife.exe`. The installer is not code-signed. Windows may show a publisher warning. The application runs offline and does not require the Delphi runtime or Go.
 
 If upgrading a previous portable version, the installer keeps a `TimeStamps.ini` located alongside the installer when one is present and no newer settings file exists.
 
-**Verification:** The **current published v2.5 build** passed a Windows runner end-to-end test: exact full splash artwork rendered with ~6.2-second startup timing, install and upgrade, 15 Format/Setup transitions, Generate and uninstall ([final tested source run](https://github.com/RHabenicht/TimeStamps/actions/runs/42649970586); [verified one-time release upload](https://github.com/RHabenicht/TimeStamps/actions/runs/42650243890)). The earlier [Windows runtime report](WINDOWS_RUNTIME_TEST_2026-11-09.md) describes a historical build with four-second splash, *not* the current published binary. The user's physical 1360×768/125%-scale screen, Norton 360 reputation, Windows 10 and mouse-driven visual accessibility are not verified.
+**Verification:** The corrected candidate passed Windows runner tests for splash artwork (including forced GDI-transfer failures), six-second startup, install/upgrade, Format transitions, generation and uninstall with empty PATH: [test run](https://github.com/RHabenicht/TimeStamps/actions/runs/42658831355). The owner confirmed it worked on November 9. Installer SHA-256: `f415d6e29d04cc71e0fbf4559f3dc1a0a213cf38b66353457589fbe1af7bf560`. The fixes remain in [PR #3](https://github.com/RHabenicht/TimeStamps/pull/3); main and the old release tags do not contain them.
 
 ## Build from source
 
@@ -62,7 +64,7 @@ See [CODEX_HANDOFF_2026-11-09.md](CODEX_HANDOFF_2026-11-09.md) for Codex transfe
 
 ## Release stability
 
-The public **v2.5 installer is pinned**. Routine GitHub builds run Windows tests and upload temporary Actions artifacts; they do **not** overwrite the v2.5 downloadable installer. This avoids changing the published binary every time the source changes. Norton 360 may still evaluate different downloaded files by signature or reputation; keeping a version/filename alone cannot guarantee a permanent antivirus exception.
+The original v2.5 application and installer assets have been removed at the owner's request. Version remains 2.5. Routine CI builds do not publish releases. The corrected download above is the existing tested binary; it has not been rebuilt or overwritten.
 
 ## Status
 
