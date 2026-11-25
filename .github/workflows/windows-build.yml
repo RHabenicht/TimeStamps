@@ -34,7 +34,7 @@ jobs:
         run: .\ci\windows-install-smoke-v25.ps1
       - uses: actions/upload-artifact@v4
         with:
-          retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
+          retention-days: 1
           name: TimeStamps-2.5-Windows
           path: |
             dist/TimeStamps.exe
